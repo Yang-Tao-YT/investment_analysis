@@ -28,7 +28,7 @@ if 'init' not in st.session_state:
 
 
 
-@st.experimental_memo(suppress_st_warning=True)  # 👈 Added this
+@ st.cache_data()  # 👈 Added this
 def return_stockindex(symbol, setting : dict = None):
     '''下载历史数据'''
     stockindex = StockIndex()

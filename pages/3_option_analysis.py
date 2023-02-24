@@ -20,7 +20,7 @@ with test[1]:
 # with st.sidebar:
 #     window = st.slider('window', 0, 130, 60)
 
-@st.cache(suppress_st_warning=True)  # 👈 Added this
+@st.cache_data()  # 👈 Added this
 def return_stockindex(symbol):
     st.write('rerun')
     stockindex = StockIndex()
