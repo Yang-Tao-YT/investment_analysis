@@ -31,6 +31,7 @@ class Bar:
         self.sell = df.sell
         self.exercise = df.exercise
         self.close = df.close
+        self.df = df
         # self.
         pass
     
@@ -91,11 +92,6 @@ class Strategy:
 
 class Trading:
 
-
-    # with open('trade_logs.log', 'a+',) as file:
-
-    #     file.write(f'new logs here_{datetime.datetime.today()}\n')
-        
     def __init__(self,) -> None:
         self.position = {'1':[], '-1':[]}
         self.trading_history = []
@@ -188,6 +184,68 @@ class Trading:
         returns = profit/self.net_account(bar)
         # print(f'returns of account is {returns * 100:.2f}% and net profit is {profit}')
         return  (returns, profit)
+
+    def save_position(self, code):
+        try:
+            with open(f'{config.path_position}/{code}.log','w') as f:
+                    json.dump(self.position, f)
+            
+            print(self.position)
+        except Exception as E:
+            print(E)
+
+class Trading:
+    position : pd.DataFrame
+    def __init__(self,) -> None:
+        
+        self.trading_history = []
+        self.bar = Bar()
+        pass
+
+    def update_bar(self, df):
+        # self.bar.update_bar(df)
+        self.bar.df = df
+
+    def load_position(self, position):
+        self.position = position
+
+    def cost(self):
+        temp = (self.position.成本价 * self.position.实际持仓).sum() * 10000
+        return temp
+
+    def balance(self):
+        temp = self.position.drop('最新价', axis = 1).join(self.bar.df).copy()
+        temp = (temp.最新价 * temp.实际持仓 * temp.持仓类型).sum() * 10000
+        return temp
+
+    # def net_account(self, bar = None):
+    #     if bar is None:
+    #         bar = self.bar
+    #     # print(self.position)
+    #     value = 0
+    #     for direction in self.position:
+    #         for position in self.position[direction]:
+    #             value += abs(position[-2] * position[-1])
+        
+    #     return value
+    def update_position(self):
+        index = self.bar.df.index[self.bar.df.index.isin( self.position.index)]
+        self.position.loc[index, '最新价'] =  self.bar.df.loc[index, '最新价']
+        self.position.loc[index, '合约市值'] =  self.position.loc[index, '最新价'] * self.position.loc[index,'实际持仓']*10000
+        self.position.loc[index, '浮动盈亏'] =  ((-1 * self.position.loc[index, '最新价']  + 
+                                             self.position.loc[index, '成本价'] * self.position.loc[index, '持仓类型'])
+                                                        * self.position.loc[index,'实际持仓']*10000)
+        self.position.loc['统计', ['浮动盈亏', '合约市值']] =  self.position.loc[index, ['浮动盈亏', '合约市值']].sum(axis = 0)
+
+
+    def profit(self):
+        
+        cost = self.cost()
+        value = self.balance()
+        profit = value - cost
+        # returns = profit/self.net_account(bar)
+        # print(f'returns of account is {returns * 100:.2f}% and net profit is {profit}')
+        return  (profit)
 
     def save_position(self, code):
         try:
