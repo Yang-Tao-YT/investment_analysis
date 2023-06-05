@@ -21,11 +21,14 @@ else:
     loader =  st.session_state['loader']
     trad =  st.session_state['trad']
 
-st.title('tracking portfolio')
-
+cols = st.columns([1,1,1])
+with cols[0]:
+    st.title('tracking portfolio') ; 
+    if st.button('refresh'):pass
+    
 @st.cache_data
 def load_position(axis = 1):
-    dataframe = pd.read_csv('position.csv', encoding = 'utf-8-sig')
+    dataframe = pd.read_csv('position.csv', encoding = 'utf-8-sig', index_col=0)
     dataframe = dataframe.replace({'义务' : -1, })
     dataframe = dataframe.set_index('合约代码')
     dataframe = dataframe.loc[~dataframe.index.isna()]
@@ -41,26 +44,41 @@ if dataframe is not None:
     # st.write(dataframe)
     dataframe = xlrd.open_workbook('position.txt', encoding_override='gbk')
     dataframe = pd.read_excel(dataframe, engine='xlrd')
-    st.write(dataframe)
+    st.dataframe(dataframe)
     dataframe.to_csv('position.csv', encoding = 'utf-8-sig', index = False)
 
 if os.path.exists('position.csv'):
     dataframe = load_position(1)
-    
+    # price
     data = loader.current_em()
     hs300 = loader.current_hs300sz_em()
+
     data = pd.concat([data, hs300])
     data = data.set_index('代码')
     data = data.apply(pd.to_numeric,args=['ignore'])
     
+    # greek
+    greek = loader.current_risk_em()
+
+    hs300 = loader.current_hs300risk_sz_em()
+    greek = pd.concat([greek, hs300])
+    greek = greek.set_index('期权代码')
+    greek = greek.apply(pd.to_numeric,args=['ignore'])
+
+
     trad.update_bar(data)
+    trad.update_greek(greek)
     trad.load_position(dataframe)
     profit = trad.profit()
 
     trad.update_position()
     st.write(trad.position)
-    st.write(profit)
+    st.info(f"浮动盈亏 {profit}")
+    st.info(f"potential earning : {trad.position.loc['统计', ['合约市值','浮动盈亏']].sum().round(2)}")
+    st.info(f"earned pctg : {round(profit / trad.position.loc['统计', ['合约市值','浮动盈亏']].sum() * 100,3)} %")
 
-    if st.button('refresh'):
-        pass
+
     debug = 1
+
+if st.button('clear'):
+    st.cache_data.clear()

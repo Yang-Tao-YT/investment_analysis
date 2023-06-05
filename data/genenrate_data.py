@@ -239,10 +239,85 @@ class AkShare:
         temp_df['今开'] = pd.to_numeric(temp_df['今开'], errors='coerce')
         return temp_df
 
+    def current_hs300risk_sz_em(self):
+        """
+        东方财富网-数据中心-特色数据-期权风险分析
+        https://data.eastmoney.com/other/riskanal.html
+        :return: 期权风险分析
+        :rtype: pandas.DataFrame
+        """
+        url = "https://push2.eastmoney.com/api/qt/clist/get"
+        params = {
+            # 'cb' : 'jQuery112303430085114075474_1679382981124'
+            'fid': 'f3',
+            'po': '1',
+            'pz': '5000',
+            'pn': '1',
+            'np': '1',
+            'fltt': '2',
+            'invt': '2',
+            'ut': 'b2884a393a59ad64002292a3e90d46a5',
+            'fields': 'f1,f2,f3,f12,f13,f14,f302,f303,f325,f326,f327,f329,f328,f301,f152,f154',
+            'fs': 'm:12'
+        }
+        r = requests.get(url, params=params)
+        data_json = r.json()
+        temp_df = pd.DataFrame(data_json["data"]["diff"])
+        temp_df.columns = [
+            '-',
+            '最新价',
+            '涨跌幅',
+            '期权代码',
+            '-',
+            '期权名称',
+            '-',
+            '-',
+            '到期日',
+            '杠杆比率',
+            '实际杠杆比率',
+            'Delta',
+            'Gamma',
+            'Vega',
+            'Theta',
+            'Rho',
+        ]
+        temp_df = temp_df[[
+            '期权代码',
+            '期权名称',
+            '最新价',
+            '涨跌幅',
+            '杠杆比率',
+            '实际杠杆比率',
+            'Delta',
+            'Gamma',
+            'Vega',
+            'Rho',
+            'Theta',
+            '到期日',
+        ]]
+        temp_df['最新价'] = pd.to_numeric(temp_df['最新价'], errors="coerce")
+        temp_df['涨跌幅'] = pd.to_numeric(temp_df['涨跌幅'], errors="coerce")
+        temp_df['杠杆比率'] = pd.to_numeric(temp_df['杠杆比率'], errors="coerce")
+        temp_df['实际杠杆比率'] = pd.to_numeric(temp_df['实际杠杆比率'], errors="coerce")
+        temp_df['Delta'] = pd.to_numeric(temp_df['Delta'], errors="coerce")
+        temp_df['Gamma'] = pd.to_numeric(temp_df['Gamma'], errors="coerce")
+        temp_df['Vega'] = pd.to_numeric(temp_df['Vega'], errors="coerce")
+        temp_df['Rho'] = pd.to_numeric(temp_df['Rho'], errors="coerce")
+        temp_df['Theta'] = pd.to_numeric(temp_df['Theta'], errors="coerce")
+        temp_df['到期日'] = pd.to_datetime(temp_df['到期日'].astype(str)).dt.date
+        return temp_df
+
     def current_risk_em(self):
         option_risk_analysis_em_df = self.ak.option_risk_analysis_em()
         
         return option_risk_analysis_em_df.sort_values('期权代码')
+
+    def current_risk_shangjiao(self, date = None):
+        if date is None:
+            date = (datetime.datetime.now() + datetime.timedelta(-1)).strftime('%Y%m%d')
+        option_risk_analysis_em_df = self.ak.option_risk_indicator_sse(date)
+        return option_risk_analysis_em_df.sort_values('SECURITY_ID')
+
 
     def download_us(self,
                     symbol=f'SPXL', 
@@ -477,9 +552,9 @@ class Request:
         return pd.concat(dfs)
 
     def current_bar_single_etf_sina(self, code = 'sh510500'):
-        url = f'https://hq.sinajs.cn/?list={code}'
+        url = f'https://hq.sinajs.cn/?list=sh510500'
 
-        response  = requests.get(url, headers={'referer' : 'https://finance.sina.com.cn/fund/quotes/'})
+        response  = requests.get(url, headers={'referer' : 'https://finance.sina.com.cn/fund/quotes/'}, timeout=6)
         series = (response.text[response.text.find('"') + 1 : response.text.rfind('"')].strip(',').split(','))
         index = ['名称','开盘价','昨收价','收盘价','最高价','最低价','drop','drop','成交量','成交额',
                 '买一量','买一价','买二量','买二价','买三量','买三价','买四量','买四价','买五量','买五价',

@@ -19,9 +19,6 @@ class Calculation:
         df  = df.pct_change()
         return df.rolling(window).std() * np.sqrt(250)
 
-
-
-
 class Bar:
 
     close = pd.Series(float)
@@ -50,6 +47,9 @@ class Strategy:
 
     def call_profit(self, exercise, current_price):
         return abs(max(current_price - exercise, 0))
+    
+    def put_profit(self, exercise, current_price):
+        return abs(max(exercise -  current_price, 0))
 
     def butterfly(self, position:dict[list], current_price = None, percentage = None):
         '''
@@ -206,11 +206,15 @@ class Trading:
         # self.bar.update_bar(df)
         self.bar.df = df
 
+    def update_greek(self, df):
+        # self.bar.update_bar(df)
+        self.greek = df
+
     def load_position(self, position):
         self.position = position
 
     def cost(self):
-        temp = (self.position.成本价 * self.position.实际持仓).sum() * 10000
+        temp = (self.position.成本价 * self.position.实际持仓* self.position.持仓类型).sum() * 10000
         return temp
 
     def balance(self):
@@ -231,13 +235,29 @@ class Trading:
     def update_position(self):
         index = self.bar.df.index[self.bar.df.index.isin( self.position.index)]
         self.position.loc[index, '最新价'] =  self.bar.df.loc[index, '最新价']
+        # 计算市值
         self.position.loc[index, '合约市值'] =  self.position.loc[index, '最新价'] * self.position.loc[index,'实际持仓']*10000
-        self.position.loc[index, '浮动盈亏'] =  ((-1 * self.position.loc[index, '最新价']  + 
+
+        #计算盈亏
+        self.position.loc[index, '浮动盈亏'] =  ((self.position.loc[index, '最新价']* self.position.loc[index, '持仓类型']  -
                                              self.position.loc[index, '成本价'] * self.position.loc[index, '持仓类型'])
                                                         * self.position.loc[index,'实际持仓']*10000)
-        self.position.loc['统计', ['浮动盈亏', '合约市值']] =  self.position.loc[index, ['浮动盈亏', '合约市值']].sum(axis = 0)
+        # self.position.loc['统计', ['浮动盈亏', '合约市值']] =  self.position.loc[index, ['浮动盈亏', '合约市值']].sum(axis = 0)
+        #计算geek
+        newgeek = (        
+            self.greek.loc[index, ['Delta', 'Gamma', 'Vega', 'Rho', 'Theta']].mul(
+                            self.position.loc[index, ['实际持仓'] ].squeeze() * self.position.loc[index, ['持仓类型'] ].squeeze()
+                     * 10000 , axis = 0)  )
+        newgeek['Theta']  = (newgeek['Theta']  / 365)
+        self.position.loc[index, ['Delta', 'Gamma', 'Vega', 'Rho', 'Theta']] = newgeek
 
+        #计算涨跌额
+        self.position.insert(9,'涨跌额',self.bar.df.loc[index , '涨跌额']* self.position.loc[index , '实际持仓'] * 10000 *  self.position.loc[index, '持仓类型'])
 
+        self.position.loc['统计',['浮动盈亏', '合约市值', '涨跌额','Delta', 'Gamma', 'Vega', 'Rho', 'Theta'] ] = (
+            self.position.loc[index, ['浮动盈亏', '合约市值', '涨跌额', 'Delta', 'Gamma', 'Vega', 'Rho', 'Theta'] ].sum(axis = 0))
+        self.position.loc[index, 'single delta'] = self.greek.loc[index, 'Delta']
+        # self.position.loc[index , '涨跌额'] = self.bar.df.loc[index , '涨跌额']* self.position.loc[index , '实际持仓'] * 10000 *  self.position.loc[index, '持仓类型']
     def profit(self):
         
         cost = self.cost()
@@ -245,7 +265,7 @@ class Trading:
         profit = value - cost
         # returns = profit/self.net_account(bar)
         # print(f'returns of account is {returns * 100:.2f}% and net profit is {profit}')
-        return  (profit)
+        return  round(profit, 2)
 
     def save_position(self, code):
         try:
@@ -255,6 +275,11 @@ class Trading:
             print(self.position)
         except Exception as E:
             print(E)
+
+class StrangleOption(Strategy):
+
+
+    pass
 
 def load_current_data(date = '20221117', option = '500ETF11', source = 'sina'):
     if source == 'dfcf':

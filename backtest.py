@@ -31,8 +31,6 @@ class TestStrategy(bt.Strategy):
         # Simply log the closing price of the series from the reference
         self.log('Close, %.2f' % self.dataclose[0])
 
-
-
 class BackTest:
 
     position = {'long':[], 'short':[]}

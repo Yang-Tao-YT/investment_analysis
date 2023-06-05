@@ -40,15 +40,17 @@ class Bar:
         self.volume = float(df.volume)
         
 
-        try:
-            self.date = df.date
-            self.open_interest = df.open_interest
-        except:
-            pass
-        pass
+        for i in ['date','open_interest','pre_close']:
+            try:
+                setattr(self, i, float(df[i]))
+            except:
+                pass
+
+
+        return self
 
     def __repr__(self) -> str:
-        return f'open : {self.open}, close : {str(self.close)}, return : {str(self.close/self.open - 1)}'
+        return f'open : {self.open}, close : {str(self.close)}, return : {str((self.close/self.pre_close - 1)* 100) } %'
         
 
 name_2_symbol = {   
@@ -60,3 +62,12 @@ name_2_symbol = {
                 'zz500' : 'sh510500' ,
                 'sz50' : 'sh510050',
                 '创业板' : 'sz399102'}
+
+
+def put_merge(合约前结算, 合约标的前收盘, 行权价):
+
+    return min(合约前结算 + max(0.12 * 合约标的前收盘 - max(合约标的前收盘 - 行权价, 0), 0.07 * 行权价), 行权价) 
+
+def call_merge(合约前结算, 合约标的前收盘, 行权价):
+
+    return 合约前结算 + max(0.12 * 合约标的前收盘 - max(行权价 - 合约标的前收盘, 0), 0.07 * 行权价)

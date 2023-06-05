@@ -16,7 +16,7 @@ with test[0]:
 symbol = name_2_symbol[symbol]
 
 with test[1]:
-    window = st.slider('window', 0, 130, 21)
+    window = st.number_input('window', 0, 130, 21)
 # with st.sidebar:
 #     window = st.slider('window', 0, 130, 60)
 
