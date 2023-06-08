@@ -81,6 +81,7 @@ def history_return_hist(days):
         pct : pd.Series
         df = stockindex_copy.origin_data.close.copy()
         # df.loc[list(pd.Series(df.index).apply(check_date))]
+        df.index  = pd.to_datetime(df.index)
         df = df.loc[pd.to_datetime('2012-06-01' ): ]
 
         if st.checkbox('exclude extra'):
@@ -89,8 +90,6 @@ def history_return_hist(days):
         df = df.to_frame()
         df['month'] = pd.to_datetime(df.index).strftime('%Y-%m')
         
-
-        pd.date_range('2012-06-02','2023-08-31',freq='WOM-4WED')
         def returns(x):
             index = list( x.index)
 
@@ -103,6 +102,9 @@ def history_return_hist(days):
             return x['close'].iloc[-1]/ x['close'].iloc[_days] - 1
         
         df = df.loc[:datetime.date(datetime.datetime.now().year, datetime.datetime.now().month, 1)]
+        if datetime.datetime.now().day < 20 :
+            df = df.loc[ : (pd.to_datetime(datetime.datetime(datetime.datetime.now().year, datetime.datetime.now().month, 1)) - 
+                        pd.Timedelta(days = 1))]
         df = df.groupby('month').apply(returns)
         # df = df.pct_change(days)
         value = pd.cut(df, 20).value_counts().sort_index()
@@ -114,9 +116,9 @@ def history_return_hist(days):
         with pcts_col[0]: st.dataframe(pct)
         with pcts_col[1]: 
             area = st.number_input('returns', 0.0, 100.0, 7.5, 0.1) / 100
-            with st.empty():
-                st.info(f'区域面积为{df.loc[(df < area) &(df > -1 * area)].shape[0]/ df.shape[0]}')
-        
+            st.info(f'区域面积为{df.loc[(df < area) &(df > -1 * area)].shape[0]/ df.shape[0]}')
+            st.info(f'上涨区域面积为{df.loc[(df < area)].shape[0]/ df.shape[0]}')
+            st.info(f'下跌区域面积为{df.loc[(df > -1 * area)].shape[0]/ df.shape[0]}')
         x_value = [ f'{round(i.left,2)}-{round(i.right,2)}' for i in value.index ]
         
         value= value.tolist() 
@@ -128,8 +130,13 @@ def history_return_hist(days):
 
         #display specific returns area
         specific_returns = st.number_input('specific_returns', 0.0, 100.0, 7.5, 0.1) / 100
-        st.write(df.loc[(df > specific_returns) | (df < -1 * specific_returns)])
-
+        spreturn_cols = st.columns(3)
+        with spreturn_cols[0]:
+            st.write(df.loc[(df < -1 * specific_returns)])
+        with spreturn_cols[1]:
+            st.write(df.loc[(df > specific_returns)])
+        # with spreturn_cols[2]:
+        #     st.write(df.loc[(df > specific_returns) | (df < -1 * specific_returns)])
 with cols[0]:
     with st.container():
         symbol = st.selectbox('code', list( name_2_symbol.keys()))
@@ -152,24 +159,15 @@ with cols[1]:
 
         with _columns[0]:
             stockindex = return_stockindex(symbol, setting=setting)
-            
-                
             stockindex_copy = copy.deepcopy(stockindex)
             stockindex_copy.origin_data['pre_close'] = stockindex_copy.origin_data.close.shift(1)
-            # if stockindex.am.date[-1] < today:
-            #     try:
-            #         bar = Bar().update_bar(stockindex_copy.origin_data.iloc[-1,:])
-            #         stockindex_copy.update_bar(bar)
-            #     except:
-            #         pass
-            # else:
             bar = Bar().update_bar(stockindex_copy.origin_data.iloc[-1,:])
             result = return_index(indicator=indicator)
             st.write(bar)
             st.write(result.iloc[::-1, :])
             
         with _columns[1]:
-            price = pd.Series(range(34,47))/10
+            price = pd.Series(range(int(bar.close * 10 * 0.87),int(bar.close * 10 * 1.13)))/10
             price.index = price
             mulit = st.number_input('倍数', 1.0 , 2.0, 1.0157)
             st.write((price / bar.close - 1) * 100)

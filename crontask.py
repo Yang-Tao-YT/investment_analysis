@@ -1,7 +1,20 @@
-from data.genenrate_data import main
-
+from data.download_option_day import download
+import config
+import datetime
+import os
 from apscheduler.schedulers.blocking import BlockingScheduler
 
+def main():
+    print('开始下载')
+    data, greek = download()
+    print(data.tail(5))
+    path_to_save = config.path_to_save
+    today = datetime.datetime.strftime( datetime.datetime.today(), '%Y%m%d')
+    if not os.path.exists(f'{path_to_save}/{today}/'):
+        os.makedirs(f'{path_to_save}/{today}/') 
+
+    data.to_csv(f'{path_to_save}/{today}/Kdata_{today}.csv')
+    greek.to_csv(f'{path_to_save}/{today}/riskdata_{today}.csv')
 
 def crontask():
     blocks = BlockingScheduler()

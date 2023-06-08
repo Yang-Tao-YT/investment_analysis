@@ -620,12 +620,12 @@ class StockIndex(Indicator):
 def stock_etf_hist_dataloader(symbol='sh515790', gateway ='dc', save_path = config.path_hist_k_data):
     '''
     读取历史k线数据'''
-    if os.path.exists(f'{save_path}/{symbol}.csv') :
-        data = pd.read_csv(f'{save_path}/{symbol}.csv')
+    # if os.path.exists(f'{save_path}/{symbol}.csv') :
+    #     data = pd.read_csv(f'{save_path}/{symbol}.csv')
         
-    else:
-        data = AkShare().download_stock_etf_hist_k(symbol, gateway, save_path, if_save=False)
-
+    # else:
+    #     data = AkShare().download_stock_etf_hist_k(symbol, gateway, save_path, if_save=False)
+    data = AkShare().download_stock_etf_hist_k(symbol, gateway, save_path, if_save=False)
     return data
 
 def barloader(symbol):

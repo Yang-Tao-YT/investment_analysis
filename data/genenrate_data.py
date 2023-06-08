@@ -144,7 +144,9 @@ class AkShare:
     def current_em(self):
         option_daily_hist_em_df = self.ak.option_current_em()
         
-        return option_daily_hist_em_df.loc[option_daily_hist_em_df.名称.str.contains('ETF')].sort_values('代码')
+        return option_daily_hist_em_df.loc[(option_daily_hist_em_df.名称.str.contains('ETF') )| 
+                                           (option_daily_hist_em_df.名称.str.contains('科创'))
+                                           ].sort_values('代码')
 
     def current_hs300sz_em(self)-> pd.DataFrame:
         """
@@ -155,7 +157,7 @@ class AkShare:
         """
         url = 'http://23.push2.eastmoney.com/api/qt/clist/get'
         params = {
-            'cb': 'jQuery1124017512497726505738_1679304133378',
+            'cb': 'jQuery112407947059507078162_1685949825979',
             'pn': '1',
             'pz': '200000',
             'po': '1',
@@ -164,7 +166,7 @@ class AkShare:
             'fltt': '2',
             'invt': '2',
             'fid': 'f3',
-            'fs': 'm:12+c:159919',
+            'fs': 'm:12',
             'fields': 'f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f12,f13,f14,f15,f16,f17,f18,f20,f21,f23,f24,f25,f22,f28,f11,f62,f128,f136,f115,f152,f133,f108,f163,f161,f162',
             '_': '1679304837515',
         }
