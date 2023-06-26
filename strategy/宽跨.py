@@ -3,19 +3,37 @@ import pandas as pd
 from .strategy import Strategy
 
 class StrangleOption(Strategy):
+
+    def process_conctracts(self, contracts):
+        contracts = contracts.rename(columns = {'行权价' : '执行价'})
+        if '期权类型' not in contracts.columns:
+            contracts['期权类型'] = None
+            contracts.loc[contracts.名称.str.contains('购'), '期权类型'] = 'C'
+            contracts.loc[contracts.名称.str.contains('沽'), '期权类型'] = 'P'
+        
+        if '合约编码' not in contracts.columns:
+            contracts['合约编码'] = contracts.index
+
+        return contracts
+
     def chose_contract(self, contracts, current_price = None, std = 0.075,  round_type = 'down'):
 
         # var
         # current_price = 4.99 ; std = 0.075; contracts = test; round_type  = 'down'
+        contracts = self.process_conctracts(contracts)
+
+        current_price
         if current_price is None:
             current_price = float(contracts.标的收盘价.iloc[0])
         up = round(current_price * (1 + std), 2)
         down = round(current_price * (1 - std), 2)
 
         if round_type == 'down' :
+            contracts.loc[(contracts.期权类型 == 'C')]
             up = contracts.loc[(contracts.执行价.astype(float) >= up) & 
                             (contracts.期权类型 == 'C')].sort_values('执行价')['合约编码'].iloc[0]
             
+            contracts.loc[(contracts.期权类型 == 'P')]
             down = contracts.loc[(contracts.执行价.astype(float) <= down) & 
                                 (contracts.期权类型 == 'P')].sort_values('执行价')['合约编码']
             if down.shape[0] == 1:
@@ -42,6 +60,7 @@ class StrangleOption(Strategy):
                 return
             
             data = _get_hs300_history_options(year)
+        data = data.loc[data.日期 != data.日期.iloc[0]]
 
         contract_date = data.loc[pd.DatetimeIndex(data.日期).month == pd.DatetimeIndex(data.到期日).month]
         contract_date['day'] = pd.DatetimeIndex(contract_date.日期).day
@@ -53,8 +72,10 @@ class StrangleOption(Strategy):
         for i in contract_date.groupby('日期'):
             print(i[0])
             call, down = self.chose_contract(i[1], std = std, round_type=round_type)
+            _result = pd.concat([call, down]).set_index('合约编码')[['期权类型']]
+            _result['direction'] = -1
 
-            result[i[0]] = pd.Series([call.合约编码.squeeze(), down.合约编码.squeeze()], index = ['call', 'put'])
+            result[i[0]] = _result
 
 
         return result

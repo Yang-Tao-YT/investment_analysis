@@ -14,3 +14,12 @@ def _get_hs300_history_options(year):
 def _get_hs300_history():
     data = pd.read_csv(f'{config.path_hist_k_data}/{"sh510300"}.csv')
     return data
+
+
+def _get_hs300_history():
+    data = pd.read_csv(f'{config.path_hist_k_data}/{"sh510300"}.csv')
+    return data
+
+def _get_hs300_history_unadjust():
+    data = pd.read_csv(f'{config.path_hist_k_data}/{"sh510300"}_不复权.csv')
+    return data

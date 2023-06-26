@@ -101,24 +101,42 @@ def history_return_hist(days):
                 _days = -1 * days
             return x['close'].iloc[-1]/ x['close'].iloc[_days] - 1
         
-        df = df.loc[:datetime.date(datetime.datetime.now().year, datetime.datetime.now().month, 1)]
-        if datetime.datetime.now().day < 20 :
-            df = df.loc[ : (pd.to_datetime(datetime.datetime(datetime.datetime.now().year, datetime.datetime.now().month, 1)) - 
-                        pd.Timedelta(days = 1))]
+        df = df.loc[:pd.date_range(df.index[0],df.index[-1],freq='WOM-4WED')[-1]]
+
+        # if datetime.datetime.now().day < 20 :
+        #     df = df.loc[ : (pd.to_datetime(datetime.datetime(datetime.datetime.now().year, datetime.datetime.now().month, 1)) - 
+        #                 pd.Timedelta(days = 1))]
         df = df.groupby('month').apply(returns)
+
+        # 在历史上按月份做统计
+        month_states = df.to_frame().copy() ; month_states.index.name = 'date'
+        month_states['month'] = pd.to_datetime(month_states.index).month
+        stats = pd.DataFrame()
+        stats['median'] = month_states.groupby('month').median()
+        stats['mean'] = month_states.groupby('month').mean()
+        stats['min'] = month_states.groupby('month').min()
+        stats['max'] = month_states.groupby('month').max()
+        stats['std'] = month_states.groupby('month').std()
+        
+        st.dataframe(stats)
+        
         # df = df.pct_change(days)
+
         value = pd.cut(df, 20).value_counts().sort_index()
         # value.sum()
         pct = value / df.dropna().shape[0] 
         pct = pct.to_frame()
         pct['count'] = value
         pcts_col = st.columns([1.5,1,3]) 
+
         with pcts_col[0]: st.dataframe(pct)
         with pcts_col[1]: 
+
             area = st.number_input('returns', 0.0, 100.0, 7.5, 0.1) / 100
             st.info(f'区域面积为{df.loc[(df < area) &(df > -1 * area)].shape[0]/ df.shape[0]}')
             st.info(f'上涨区域面积为{df.loc[(df < area)].shape[0]/ df.shape[0]}')
             st.info(f'下跌区域面积为{df.loc[(df > -1 * area)].shape[0]/ df.shape[0]}')
+
         x_value = [ f'{round(i.left,2)}-{round(i.right,2)}' for i in value.index ]
         
         value= value.tolist() 
@@ -131,8 +149,10 @@ def history_return_hist(days):
         #display specific returns area
         specific_returns = st.number_input('specific_returns', 0.0, 100.0, 7.5, 0.1) / 100
         spreturn_cols = st.columns(3)
+
         with spreturn_cols[0]:
             st.write(df.loc[(df < -1 * specific_returns)])
+
         with spreturn_cols[1]:
             st.write(df.loc[(df > specific_returns)])
         # with spreturn_cols[2]:

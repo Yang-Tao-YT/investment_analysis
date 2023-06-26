@@ -3,6 +3,7 @@ import config
 import datetime
 import os
 from apscheduler.schedulers.blocking import BlockingScheduler
+from utils.logs import make_print_to_file
 
 def main():
     print('开始下载')
@@ -12,6 +13,7 @@ def main():
     today = datetime.datetime.strftime( datetime.datetime.today(), '%Y%m%d')
     if not os.path.exists(f'{path_to_save}/{today}/'):
         os.makedirs(f'{path_to_save}/{today}/') 
+        print(f'{path_to_save}/{today}/')
 
     data.to_csv(f'{path_to_save}/{today}/Kdata_{today}.csv')
     greek.to_csv(f'{path_to_save}/{today}/riskdata_{today}.csv')
@@ -22,4 +24,6 @@ def crontask():
     blocks.start()
 
 if __name__ == '__main__':
-    crontask()
+    make_print_to_file(path='/usr/local/app/app/app/cron/')
+    main()
+    # crontask()

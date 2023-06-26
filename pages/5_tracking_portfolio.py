@@ -56,6 +56,7 @@ if os.path.exists('position.csv'):
     data = pd.concat([data, hs300])
     data = data.set_index('代码')
     data = data.apply(pd.to_numeric,args=['ignore'])
+
     
     # greek
     greek = loader.current_risk_em()

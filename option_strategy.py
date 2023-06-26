@@ -66,7 +66,7 @@ class Strategy:
             # profit = self.profit(k1, current_price) - 2 * self.profit(k2, current_price) + self.profit(k3, current_price) 
             profit = balance - cost
             return profit/ account
-
+   
         exe_max = max([i[-3] for i in long] + [i[-3] for i in short])
         exe_min = min([i[-3] for i in long] + [i[-3] for i in short])
 
