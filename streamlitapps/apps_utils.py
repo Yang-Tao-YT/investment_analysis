@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 def display_returns_scale(bar):
-    price = pd.Series(range(int(bar.close * 10 * 0.87),int(bar.close * 10 * 1.13)))/10
+    price = pd.Series(np.arange(int(bar.close * 10 * 0.87),int(bar.close * 10 * 1.13), step=1))/10
     price.index = price
     st.write((price / bar.close - 1) * 100)
     if st.checkbox('倍数'):

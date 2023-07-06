@@ -571,6 +571,7 @@ class Indicator:
                 # 过去t_max天 最低最低价
             llv_l = pd.Series(low).rolling(t_max).min().values
             return pd.Series(((close-llv_l)/(hhv_h-llv_l))*100).rolling(t).mean().values
+        
         rsi1 = am.rsi(self.ma_window, array=True)
         rsi2 = am.rsi(self.ma_window+2, array=True)
         rsi3 = am.rsi(self.ma_window+5, array=True)

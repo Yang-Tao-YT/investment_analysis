@@ -1,6 +1,6 @@
 import sys
 print(sys.path)
-from asdsadwdasdwadd.basic import name_2_symbol, rename_dataframe, Bar
+from utils.basic import name_2_symbol, rename_dataframe, Bar
 import copy
 import datetime
 import os
@@ -33,6 +33,7 @@ cols  = st.columns(2)
 if 'init' not in st.session_state:
     st.session_state.init = 1
     st.session_state.plot = 0
+    st.session_state.risk_quantile = 0
 
 
 
@@ -230,14 +231,31 @@ with cols[1]:
 if st.button('plot'):
     st.session_state.plot = 1 - st.session_state.plot
 
-tabs = st.tabs(['risk', 'history return'])
+tabs = st.tabs(['risk', 'history return', 'risk_quantile'])
+
 with tabs[1]:
-    # history returns hist
-    # print('yongletab1')
+    # 计算历史收益分布
     days = st.number_input('days',0,60,21)
     if 1:
         history_return_hist(days)
     pass
+
+with tabs[2]:
+    # 计算risk收益分布
+    if st.button('risk_quantile'):
+        st.session_state.risk_quantile = 1 - st.session_state.risk_quantile
+        
+    if st.session_state.risk_quantile:
+        result = result.dropna()
+        # np.histogram(result, density=True)[0]
+
+        st.write((result < result.iloc[-1]).sum() / result.shape[0])
+        value = pd.cut(result.squeeze(), 100).value_counts().sort_index() # 切分后求数量
+        x_value = [ f'{round(i.left,2)}-{round(i.right,2)}' for i in value.index ]
+        value= value.tolist() 
+        components.html( plot_bar(x_value, value),width=1800, height=500)
+
+
 if st.session_state.plot:
 # if 1:
         # stockindex.origin_data['risk'] = list(stockindex.risk()[1].squeeze())
