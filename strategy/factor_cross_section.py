@@ -47,6 +47,7 @@ def main(if_save = True) -> Results:
     result = {}
     for _ix in list( name_2_symbol.keys()):
         result[_ix] =  calculate_indicator(name_2_symbol[_ix])
+        result[_ix]['quantile'] = (result[_ix]['indicator'] < result[_ix]['indicator'].iloc[-1]).sum() / result[_ix]['indicator'].shape[0]
         print(result[_ix])
 
 
