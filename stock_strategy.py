@@ -31,7 +31,7 @@ class ArrayManager(object):
         self.open_interest_array: np.ndarray = np.zeros(size)
         self.date: np.ndarray = np.zeros(size)
 
-    def update_hist(self, hist) -> None:
+    def update_hist(self, hist : pd.DataFrame) -> None:
         self.open_array: np.ndarray = np.array(hist['open'])
         self.high_array: np.ndarray = np.array(hist['high'])
         self.low_array: np.ndarray = np.array(hist['low'])
