@@ -1,6 +1,6 @@
 import copy
 import pandas as pd
-from utils.basic import name_2_symbol, rename_dataframe, Bar
+from utils.basic import name_2_symbol, rename_dataframe, Bar, send_to
 from stock_strategy import StockIndex, stock_etf_hist_dataloader
 
 class Results:
@@ -64,10 +64,13 @@ def main(if_save = True) -> Results:
 
     #保存indicator
     indicator = pd.Series(indicator)
+    
     if if_save:    
         import datetime
-        indicator.to_csv(f'/usr/local/app/app/app/finance_data/etf_risk/{datetime.datetime.today().strftime("%Y%m%d")}')
-
+        indicator.sort_values().to_csv(f'../finance_data/etf_risk/{datetime.datetime.today().strftime("%Y%m%d")}.csv')
+        send_to(Subject='hi, yang',
+                messages=pd.read_csv(f'../finance_data/etf_risk/{datetime.datetime.today().strftime("%Y%m%d")}.csv').to_string()
+                 ,attach=f'../finance_data/etf_risk/{datetime.datetime.today().strftime("%Y%m%d")}.csv')
     return results
 
 if __name__ == '__main__':

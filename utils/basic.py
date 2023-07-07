@@ -1,3 +1,5 @@
+import smtplib
+
 def rename_dataframe(df, ):
     columns = {'买价' : 'buy' , 
                 '卖价' : 'sell', 
@@ -29,7 +31,6 @@ def rename_dataframe(df, ):
                 }
     return df.rename(columns = columns)
 
-
 class Bar:
 
     def update_bar(self, df ):
@@ -52,7 +53,6 @@ class Bar:
     def __repr__(self) -> str:
         return f'open : {self.open}, close : {str(self.close)}, return : {str((self.close/self.pre_close - 1)* 100) } %'
         
-
 name_2_symbol = {   
                 '沪深300':'sh510300', 
                 '光伏':'sh515790',
@@ -79,11 +79,66 @@ name_2_symbol = {
 
 }
 
+def send_email( FROM,
+                TO, 
+                CONTENT = 'None', 
+                HOST = 'smtp.126.com', 
+                SUBJECT = 'title', 
+                attachs = None, 
+                PORT = '25',
+                password='VPZHHOBAXTYGREZU'):
+    try:
 
-def put_merge(合约前结算, 合约标的前收盘, 行权价):
+        #设置服务器所需信息
+        HOST = HOST
+        # 2> 配置服务的端口，默认的邮件端口是25.
+        PORT = PORT
+        # 3> 指定发件人和收件人。
+        FROM = FROM
+        TO = TO
+        # 4> 邮件标题
+        SUBJECT = SUBJECT
+        # 5> 邮件内容
+        CONTENT = CONTENT
+        
+        # 创建邮件发送对象
+        # 普通的邮件发送形式
+        smtp_obj = smtplib.SMTP()
+        
+        # 数据在传输过程中会被加密。
+        # smtp_obj = smtplib.SMTP_SSL()
+        
+        # 需要进行发件人的认证，授权。
+        # smtp_obj就是一个第三方客户端对象
+        smtp_obj.connect(host=HOST, port=PORT)
+        smtp_obj.ehlo(HOST)
+        # 如果使用第三方客户端登录，要求使用授权码，不能使用真实密码，防止密码泄露。
+        res = smtp_obj.login(user=FROM, password=password)
+        print('登录结果：',res)
 
-    return min(合约前结算 + max(0.12 * 合约标的前收盘 - max(合约标的前收盘 - 行权价, 0), 0.07 * 行权价), 行权价) 
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.application import MIMEApplication
+        from email.mime.text import MIMEText
+        msg = MIMEMultipart()
+        msg['From'] = FROM
+        msg['To'] = ','.join(TO)
+        msg['Subject'] = SUBJECT
+        att = MIMEText(CONTENT, "plain", "utf-8")  # 使用UTF-8编码格式保证多语言的兼容性
+        msg.attach(att)
 
-def call_merge(合约前结算, 合约标的前收盘, 行权价):
+        if attachs is not None:
+            part = MIMEApplication(open(attachs, 'rb').read())
+            part.add_header('Content-Disposition', 'attachment', filename='file_name.csv')
+            msg.attach(part)
+        # 发送邮件
+        smtp_obj.sendmail(from_addr=FROM, to_addrs=TO, msg=msg.as_string()) 
+        
+        # msg = '\n'.join(['From: {}'.format(FROM), 'To: {}'.format(TO), 'Subject: {}'.format(SUBJECT), '', CONTENT])
+        # smtp_obj.sendmail(from_addr=FROM, to_addrs=TO, msg=msg.encode('utf-8'))
 
-    return 合约前结算 + max(0.12 * 合约标的前收盘 - max(行权价 - 合约标的前收盘, 0), 0.07 * 行权价)
+    except Exception as E:
+        print(E)
+
+def send_to(Subject , messages = 'None', attach = None):
+    send_email(FROM='yangt_1@126.com', TO =['781188496@qq.com'], CONTENT=messages, SUBJECT=Subject, attachs=attach)
+    pass
