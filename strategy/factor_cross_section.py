@@ -71,6 +71,7 @@ def main(if_save = True) -> Results:
         send_to(Subject='hi, yang',
                 messages=pd.read_csv(f'../finance_data/etf_risk/{datetime.datetime.today().strftime("%Y%m%d")}.csv').to_string()
                  ,attach=f'../finance_data/etf_risk/{datetime.datetime.today().strftime("%Y%m%d")}.csv')
+        
     return results
 
 if __name__ == '__main__':
