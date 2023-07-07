@@ -18,7 +18,7 @@ def calcualte_indicator(x):
     result = cross_section(if_save=False)
     indicator = result.indicator
     bar = result.bar
-    df = pd.DataFrame([indicator, bar], index = ['risk', '当日涨跌']).T.sort_values('risk')
+    df = pd.DataFrame([indicator, bar, result.quantile], index = ['risk', '当日涨跌', 'quantile']).T.sort_values('risk')
     return df
 
 st.dataframe(calcualte_indicator(1))

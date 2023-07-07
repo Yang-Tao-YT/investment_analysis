@@ -6,6 +6,7 @@ from stock_strategy import StockIndex, stock_etf_hist_dataloader
 class Results:
     indicator = None
     bar = None
+    quantile = None
 
 def return_stockindex(symbol, setting : dict = None):
     '''下载历史数据'''
@@ -54,7 +55,12 @@ def main(if_save = True) -> Results:
     #整合
     indicator = {k: v['indicator'].iloc[-1].squeeze() for k, v in result.items()}
     bar = {k:str(round(v['bar'].close/v['bar'].pre_close - 1, 3)* 100) + '%' for k, v in result.items()}
-    results = Results() ; results.indicator = indicator; results.bar = bar
+    quantile = {k: v['quantile'].squeeze() for k, v in result.items()}
+
+    results = Results() ; 
+    results.indicator = indicator; 
+    results.bar = bar
+    results.quantile = quantile
 
     #保存indicator
     indicator = pd.Series(indicator)
