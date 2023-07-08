@@ -123,6 +123,7 @@ def send_email( FROM,
         msg['From'] = FROM
         msg['To'] = ','.join(TO)
         msg['Subject'] = SUBJECT
+        
         att = MIMEText(CONTENT, "plain", "utf-8")  # 使用UTF-8编码格式保证多语言的兼容性
         msg.attach(att)
 
