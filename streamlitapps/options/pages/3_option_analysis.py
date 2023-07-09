@@ -10,6 +10,7 @@ from utils.basic import name_2_symbol, rename_dataframe, Bar
 from stock_strategy import StockIndex, stock_etf_hist_dataloader
 from utils.calculate import calculate_mergin
 
+
 st.set_page_config(
 page_title="investing analysis",  #页面标题
 # page_icon=":rainbow:",  #icon
@@ -52,6 +53,7 @@ with tabs[0]:
         # 获取option价格
         data = loader.current_em()
         hs300 = loader.current_hs300sz_em()
+        greek = loader.current_risk_em()
 
         data = pd.concat([data, hs300])
         data = data.set_index('代码')
@@ -70,6 +72,8 @@ with tabs[0]:
         elif symbol == 'sh510500':
             data = data.loc[data.名称.str.startswith('500')]
 
+        #添加risk指标
+        data = data.join(greek.set_index('期权代码')[['实际杠杆比率' ,  'Delta' ,  'Gamma'  ,  'Vega'  ,   'Rho',   'Theta']])
         days = data['剩余日'].unique() ; days.sort()
         
         #读取剩余日
@@ -107,10 +111,15 @@ with tabs[0]:
         combine_margin = max(contracts['保证金']) + min(contracts['最新价'])
         st.write(contracts)
         returns = (contracts["最新价"].sum() - 0.0006) / combine_margin 
-        st.info(f'收益率为{returns * 100} %')
+
+        # 计算risk指标
+        contracts['pecentage'] = 1
+        st.dataframe(contracts[['实际杠杆比率' ,  'Delta' ,  'Gamma'  ,  'Vega'  ,   'Rho',   'Theta']].T.dot(contracts['pecentage']))
+
         if contracts_amount != 0:
             st.info(f'收益为{round((contracts["最新价"].sum() - 0.0006) * contracts_amount, 3)} 万')
             st.info(f'使用保证金{round(combine_margin * contracts_amount, 3)} 万')
+        st.info(f'收益率为{returns * 100} %')
         st.info(f'收益为{round(returns * account_amount / 10000, 3)} 万')
 
 
@@ -149,9 +158,26 @@ with tabs[1]:
         _price = price.origin_data; _price['前收盘'] = _price['close'].shift()
         contracts = calculate_mergin(contracts, _price.iloc[-1, :])
         combine_margin = max(contracts['保证金']) + min(contracts['最新价'])
+        # from st_aggrid import AgGrid, GridOptionsBuilder
+        # from st_aggrid.shared import  ColumnsAutoSizeMode
+        # dfssss = GridOptionsBuilder.from_dataframe(contracts)
+        # dfssss.configure_default_column(editable=True)
+        # grid_options = dfssss.build()
+        # grid_options['columnDefs'][0]['width'] = 300
+
+        # dfssss=AgGrid(contracts, 
+        #               gridOptions=grid_options,
+        #             #   editable =True, 
+        #             #   width = 1, 
+        #               columns_auto_size_mode=ColumnsAutoSizeMode.FIT_ALL_COLUMNS_TO_VIEW
+        #               )
+        # st.write(dfssss['data'])
         st.write(contracts)
         returns = (contracts["最新价"].dot(contracts['pecentage']) - 0.0006) / combine_margin 
-        
+        # 计算risk指标
+        # contracts['pecentage'] = 1
+        st.dataframe(contracts[['实际杠杆比率' ,  'Delta' ,  'Gamma'  ,  'Vega'  ,   'Rho',   'Theta']].T.dot(contracts['pecentage']))
+
         contracts_amount = st.number_input('手数', value = 0, key='123')
         if contracts_amount != 0:
             st.info(f'收益为{round((contracts["最新价"].dot(contracts["pecentage"]) - 0.0006) * contracts_amount, 3)} 万')
