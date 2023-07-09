@@ -1,2 +1,4 @@
 cd ..
-streamlit run streamlit_app.py
+streamlit run streamlitapps\options\options×Ü¿Ø.py
+
+PAUSE
