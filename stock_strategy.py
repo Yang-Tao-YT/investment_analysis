@@ -603,7 +603,7 @@ class StockIndex(Indicator):
 
     def update_setting(self, setting : dict):
         for i in setting:
-            setattr(self,i,setting[i])
+            setattr(self, i, setting[i])
     
     def risk(self,am = None):
         if am is None:

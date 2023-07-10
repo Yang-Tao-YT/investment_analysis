@@ -43,18 +43,18 @@ def calculate_indicator(symbol, indicator = ['risk'], setting=None):
 
     return {'indicator' : result, 'bar' : bar}
 
-def main(if_save = True) -> Results:
+def main(if_save = True, setting = None) -> Results:
     # 挨个计算 bar 和 indicator
     result = {}
     for _ix in list( name_2_symbol.keys()):
-        result[_ix] =  calculate_indicator(name_2_symbol[_ix])
+        result[_ix] =  calculate_indicator(name_2_symbol[_ix], setting = setting)
         result[_ix]['quantile'] = (result[_ix]['indicator'] < result[_ix]['indicator'].iloc[-1]).sum() / result[_ix]['indicator'].shape[0]
         print(result[_ix])
 
 
     #整合
     indicator = {k: v['indicator'].iloc[-1].squeeze() for k, v in result.items()}
-    bar = {k:str(round(v['bar'].close/v['bar'].pre_close - 1, 3)* 100) + '%' for k, v in result.items()}
+    bar = {k:v['bar'].close/v['bar'].pre_close *1000000 - 1  for k, v in result.items()}
     quantile = {k: v['quantile'].squeeze() for k, v in result.items()}
 
     results = Results() ; 

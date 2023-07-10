@@ -378,7 +378,7 @@ class AkShare:
 
         if gateway == 'dc':
             data = self.stock_zh_a_hist(symbol, adjust='qfq')
-            print(data)
+            # print(data)
             data["日期"] = pd.to_datetime(data["日期"]).dt.date
 
         else:

@@ -96,11 +96,21 @@ if os.path.exists('position.csv'):
 
     # calculate scale
     test = trad.position.iloc[:-1].copy()
-    test.loc[test.合约名称.str.contains('300'), '行权价'] = test.loc[test.合约名称.str.contains('300'), '行权价'] / hs300_price - 1
-    test.loc[test.合约名称.str.contains('500'), '行权价'] = test.loc[test.合约名称.str.contains('500'), '行权价'] / zz500_price - 1
-    trad.position.insert(4, '比例', test['行权价'])
+    test.loc[test.合约名称.str.contains('300ETF'), '行权价'] = test.loc[test.合约名称.str.contains('300ETF'), '行权价'] / hs300_price - 1
+    test.loc[test.合约名称.str.contains('500ETF'), '行权价'] = test.loc[test.合约名称.str.contains('500ETF'), '行权价'] / zz500_price - 1
+    trad.position.insert(4, '比例', test['行权价'] * 100) 
 
-    st.dataframe(trad.position)
+    st.dataframe(trad.position.drop(['行权价值' ,'行权盈亏', '备兑数量'], axis = 1),
+                 column_config={
+        "比例": st.column_config.NumberColumn(
+            "行权涨跌幅%",
+            help="The price of the product in USD",
+            min_value=0,
+            max_value=1000,
+            # step=1,
+            format="%.2f %%",
+        )
+    })
     st.info(f"浮动盈亏 {profit}")
     st.info(f"potential earning : {trad.position.loc['统计', ['合约市值','浮动盈亏']].sum().round(2)}")
     st.info(f"earned pctg : {round(profit / trad.position.loc['统计', ['合约市值','浮动盈亏']].sum() * 100,3)} %")

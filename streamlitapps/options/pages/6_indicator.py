@@ -12,17 +12,34 @@ layout="wide", #页面布局
 initial_sidebar_state="auto" #侧边栏
 )
 
-@st.cache_data()
-def calcualte_indicator(x):
+@st.cache_data
+def calcualte_indicator(x, setting = None):
     # 传换成st的缓存格式
-    result = cross_section(if_save=False)
+    result = cross_section(if_save=False, setting = setting)
     indicator = result.indicator
     bar = result.bar
-    df = pd.DataFrame([indicator, bar, result.quantile], index = ['risk', '当日涨跌', 'quantile']).T.sort_values('risk')
+    bar = {k:v * 100000 for k,v in bar.items()}
+    df = pd.DataFrame({'risk' : indicator, '当日涨跌' : bar, 'quantile' : result.quantile}).sort_values('risk')
+
+    # df = pd.DataFrame([indicator, bar, result.quantile], index = ['risk', '当日涨跌', 'quantile']).T.sort_values('risk')
     return df
 
-st.dataframe(calcualte_indicator(1))
 
-if st.button('run'):
+
+window = st.number_input('window', value=0)
+
+if window == 0:
+    setting = None
+else:
+    setting = {'ma_window' : window}
+
+st.write(setting)
+st.dataframe(calcualte_indicator(1, setting))
+
+
+
+if st.sidebar.button('run'):
     st.cache_data.clear()
+    st.session_state.clear()
+    
     st.experimental_rerun()

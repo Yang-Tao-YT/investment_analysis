@@ -1,6 +1,2 @@
-
-
-class BlackSchole:
-
-    def __init__(self) -> None:
-        pass
+import sys
+print(sys.path)
