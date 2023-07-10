@@ -11,6 +11,9 @@ page_icon=":rainbow:",  #icon
 layout="wide", #页面布局
 initial_sidebar_state="auto" #侧边栏
 )
+import sys
+import pathlib
+sys.path.append(str(pathlib.Path().absolute()).split("/src")[0] )
 
 @st.cache_data
 def calcualte_indicator(x, setting = None):
@@ -18,7 +21,7 @@ def calcualte_indicator(x, setting = None):
     result = cross_section(if_save=False, setting = setting)
     indicator = result.indicator
     bar = result.bar
-    bar = {k:v * 100000 for k,v in bar.items()}
+    bar = {k: str(round(v * 100, 2)) + '%' for k,v in bar.items()}
     df = pd.DataFrame({'risk' : indicator, '当日涨跌' : bar, 'quantile' : result.quantile}).sort_values('risk')
 
     # df = pd.DataFrame([indicator, bar, result.quantile], index = ['risk', '当日涨跌', 'quantile']).T.sort_values('risk')

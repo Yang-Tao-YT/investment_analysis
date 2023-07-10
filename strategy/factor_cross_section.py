@@ -54,7 +54,7 @@ def main(if_save = True, setting = None) -> Results:
 
     #整合
     indicator = {k: v['indicator'].iloc[-1].squeeze() for k, v in result.items()}
-    bar = {k:v['bar'].close/v['bar'].pre_close *1000000 - 1  for k, v in result.items()}
+    bar = {k:v['bar'].close/v['bar'].pre_close *1 - 1  for k, v in result.items()}
     quantile = {k: v['quantile'].squeeze() for k, v in result.items()}
 
     results = Results() ; 

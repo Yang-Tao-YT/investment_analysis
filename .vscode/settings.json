@@ -1,5 +1,15 @@
 {
     "python.analysis.typeCheckingMode": "off",
-    "python.languageServer": "Pylance"
-
+    "python.languageServer": "Pylance",
+    "terminal.integrated.env.osx": { 
+        "PYTHONPATH": "${workspaceFolder}/", 
+    }, 
+    "terminal.integrated.env.linux": { 
+        "PYTHONPATH": "${workspaceFolder}/", 
+    }, 
+    "terminal.integrated.env.windows": { 
+        "PYTHONPATH": "${workspaceFolder}/", 
+    }
 }
+
+
