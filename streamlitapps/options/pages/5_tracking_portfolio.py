@@ -100,10 +100,18 @@ if os.path.exists('position.csv'):
     test.loc[test.合约名称.str.contains('500ETF'), '行权价'] = test.loc[test.合约名称.str.contains('500ETF'), '行权价'] / zz500_price - 1
     trad.position.insert(4, '比例', test['行权价'] * 100) 
 
-    st.dataframe(trad.position.drop(['行权价值' ,'行权盈亏', '备兑数量'], axis = 1),
+    st.dataframe(trad.position.drop(['行权价值' ,'行权盈亏', '备兑数量','可用'], axis = 1),
                  column_config={
         "比例": st.column_config.NumberColumn(
             "行权涨跌幅%",
+            help="The price of the product in USD",
+            min_value=0,
+            max_value=1000,
+            # step=1,
+            format="%.2f %%",
+        ),
+        "涨跌幅": st.column_config.NumberColumn(
+            "涨跌幅%",
             help="The price of the product in USD",
             min_value=0,
             max_value=1000,
@@ -120,3 +128,4 @@ if os.path.exists('position.csv'):
 
 if st.button('clear'):
     st.cache_data.clear()
+    st.session_state.clear()

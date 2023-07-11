@@ -11,6 +11,7 @@ page_icon=":rainbow:",  #icon
 layout="wide", #页面布局
 initial_sidebar_state="auto" #侧边栏
 )
+
 import sys
 import pathlib
 sys.path.append(str(pathlib.Path().absolute()).split("/src")[0] )

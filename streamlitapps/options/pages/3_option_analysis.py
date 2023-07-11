@@ -114,8 +114,13 @@ with tabs[0]:
 
         # 计算risk指标
         contracts['pecentage'] = 1
-        st.dataframe(contracts[['实际杠杆比率' ,  'Delta' ,  'Gamma'  ,  'Vega'  ,   'Rho',   'Theta']].T.dot(contracts['pecentage']))
-
+        risk_indicators = contracts[['实际杠杆比率' ,  'Delta' ,  'Gamma'  ,  'Vega'  ,   'Rho',   'Theta']].T.dot(
+            contracts['pecentage']) 
+        risk_indicators[['Delta' ,  'Gamma'  ,  'Vega'  ,   'Rho',   'Theta']] =(
+            risk_indicators[['Delta' ,  'Gamma'  ,  'Vega'  ,   'Rho',   'Theta']] * -1
+        )
+        st.dataframe(risk_indicators)
+        
         if contracts_amount != 0:
             st.info(f'收益为{round((contracts["最新价"].sum() - 0.0006) * contracts_amount, 3)} 万')
             st.info(f'使用保证金{round(combine_margin * contracts_amount, 3)} 万')
@@ -175,8 +180,12 @@ with tabs[1]:
         st.write(contracts)
         returns = (contracts["最新价"].dot(contracts['pecentage']) - 0.0006) / combine_margin 
         # 计算risk指标
-        # contracts['pecentage'] = 1
-        st.dataframe(contracts[['实际杠杆比率' ,  'Delta' ,  'Gamma'  ,  'Vega'  ,   'Rho',   'Theta']].T.dot(contracts['pecentage']))
+        risk_indicators = contracts[['实际杠杆比率' ,  'Delta' ,  'Gamma'  ,  'Vega'  ,   'Rho',   'Theta']].T.dot(
+            contracts['pecentage']) 
+        risk_indicators[['Delta' ,  'Gamma'  ,  'Vega'  ,   'Rho',   'Theta']] =(
+            risk_indicators[['Delta' ,  'Gamma'  ,  'Vega'  ,   'Rho',   'Theta']] * -1
+        )
+        st.dataframe(risk_indicators)
 
         contracts_amount = st.number_input('手数', value = 0, key='123')
         if contracts_amount != 0:

@@ -254,11 +254,13 @@ class Trading:
 
         #计算涨跌额
         self.position.insert(9,'涨跌额',self.bar.df.loc[index , '涨跌额']* self.position.loc[index , '实际持仓'] * 10000 *  self.position.loc[index, '持仓类型'])
+        self.position.insert(2,'涨跌幅',self.bar.df.loc[index , '涨跌幅'])
 
         self.position.loc['统计',['浮动盈亏', '合约市值', '涨跌额','Delta', 'Gamma', 'Vega', 'Rho', 'Theta'] ] = (
             self.position.loc[index, ['浮动盈亏', '合约市值', '涨跌额', 'Delta', 'Gamma', 'Vega', 'Rho', 'Theta'] ].sum(axis = 0))
         self.position.loc[index, 'single delta'] = self.greek.loc[index, 'Delta']
         # self.position.loc[index , '涨跌额'] = self.bar.df.loc[index , '涨跌额']* self.position.loc[index , '实际持仓'] * 10000 *  self.position.loc[index, '持仓类型']
+    
     def profit(self):
         
         cost = self.cost()
