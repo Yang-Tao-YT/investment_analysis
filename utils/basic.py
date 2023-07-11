@@ -103,14 +103,14 @@ def send_email( FROM,
         
         # 创建邮件发送对象
         # 普通的邮件发送形式
-        smtp_obj = smtplib.SMTP()
+        smtp_obj = smtplib.SMTP_SSL(HOST, port = 465)
         
         # 数据在传输过程中会被加密。
         # smtp_obj = smtplib.SMTP_SSL()
         
         # 需要进行发件人的认证，授权。
         # smtp_obj就是一个第三方客户端对象
-        smtp_obj.connect(host=HOST, port=PORT)
+        # smtp_obj.connect(host=HOST, port='25')
         smtp_obj.ehlo(HOST)
         # 如果使用第三方客户端登录，要求使用授权码，不能使用真实密码，防止密码泄露。
         res = smtp_obj.login(user=FROM, password=password)
