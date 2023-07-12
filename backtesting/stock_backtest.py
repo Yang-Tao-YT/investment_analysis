@@ -6,7 +6,7 @@ class _BacktestUtils:
     position = pd.DataFrame(columns=['ticker', 'shares', 'price', 'cost'])
 
     def calculate_position_value(self):
-        return self.position['shares'].dot(self.position['cost'])
+        return self.position['shares'].dot(self.position['price'])
     
 class Backtest(_BacktestUtils):
 
@@ -15,7 +15,6 @@ class Backtest(_BacktestUtils):
     kdata = pd.DataFrame()
     position = pd.DataFrame(columns=['ticker', 'shares', 'price', 'cost'])
     initial_account = 0
-    cash = 0
     total_value = 0
     total_profit = 0
     total_value_record = {}
@@ -43,13 +42,28 @@ class Backtest(_BacktestUtils):
             for key in config:
                 setattr(self, key, config[key])
 
+    def cash(self):
+        return self.position.loc[self.position['ticker'] == 'cash', 'shares'].squeeze()
+
     def on_bar(self, date, data):
+        pass
+    
+    def return_value_records(self):
+        return pd.Series(self.total_value_record)
+
+    def update_portfolio(self, price : pd.Series):
+        position = self.position.set_index('ticker')
+        price = position.join(price)[price.name]
+        position['price'] = price
+        position.loc['cash', 'price'] = 1
+        self.position = position.reset_index()
         pass
 
     def run(self):
 
         data = self.kdata
-        index = data['date'][(data['date'] >= self.start_date) & (data['date'] <= self.end_date)]
+        index = pd.DatetimeIndex( data['date']).unique()
+        index = index[(index >= self.start_date) & (index <= self.end_date)]
         data = data.sort_values(by=['date'])
         # inital position
         self.position.loc[0] = ['cash' ,self.initial_account, 1, 1]
@@ -57,12 +71,16 @@ class Backtest(_BacktestUtils):
         self.total_value = self.calculate_position_value()
 
         for _index in index:
-            on_bar_data = data.loc[data['date'] <= _index]
+            print(_index)
+            on_bar_data = data.loc[data['date'] == _index]
             self.on_bar(_index, on_bar_data)
             self.total_value = self.calculate_position_value()
-
-            pass
-
+            self.total_value_record[_index] = self.total_value
+            # pass
+        
+        self.return_value_records()
+        return 
+    
     def long(self, ticker, shares, price):
         if ticker in self.position.ticker.values:
             # calculate total value of position
@@ -82,13 +100,14 @@ class Backtest(_BacktestUtils):
         pass
 
     def long_portfolio(self, portfolio : pd.DataFrame):
-        assert self.position.columns == portfolio.columns
-        
+        assert (self.position.columns == portfolio.columns).all()
+        assert (self.position.loc[self.position['ticker'] == 'cash', 'shares'] >= portfolio['price'].dot(portfolio['shares'])).all()
+
         if portfolio['ticker'].isin(self.position.ticker.values).any():
             plus = portfolio.loc[portfolio['ticker'].isin(self.position.ticker.values)]
             # calculate total value of position
-            total_value = (self.position.loc[self.position.ticker == plus['ticker'], 'shares'] * 
-                                        self.position.loc[self.position.ticker == plus['ticker'], 'price'])
+            total_value = (self.position.loc[self.position.ticker.isin(plus['ticker']).index, 'shares'] * 
+                                        self.position.loc[self.position.ticker.isin(plus['ticker']).index, 'price'])
             total_value = total_value + (plus['shares'] * plus['price'])
             # plus new share
             self.position.loc[self.position['ticker'] == plus['ticker'], 'shares'] += plus['shares']
@@ -101,6 +120,8 @@ class Backtest(_BacktestUtils):
         if portfolio.shape[0] > 0:
             
             self.position = pd.concat([self.position, portfolio])
+        
+        self.position.loc[self.position['ticker'] == 'cash', 'shares'] -= portfolio['price'].dot(portfolio['shares'])
 
         return self.position
     
@@ -118,15 +139,23 @@ class Backtest(_BacktestUtils):
         pass
     
     def short_portfolio(self, portfolio : pd.DataFrame):
-        assert self.position.columns == portfolio.columns
+        assert (self.position.columns == portfolio.columns).all()
         
         if portfolio['ticker'].isin(self.position.ticker.values).any():
             plus = portfolio.loc[portfolio['ticker'].isin(self.position.ticker.values)]
             # miuns new share
-            self.position.loc[self.position['ticker'] == plus['ticker'], 'shares'] -= plus['shares']
-            
+            position = self.position.set_index('ticker')
+            position.loc[plus['ticker'], 'shares'] -= plus.set_index('ticker')['shares']
+
             portfolio = portfolio.loc[~portfolio['ticker'].isin(self.position.ticker.values)]
-        
+
+            # 删掉0股票
+            self.position = position.reset_index()
+            self.position = self.position.drop(self.position[self.position['shares'] == 0].index)
+
+            #卖出加回cash
+            self.position.loc[self.position['ticker'] == 'cash', 'shares'] += plus['price'].dot(plus['shares'])
+
         if portfolio.shape[0] > 0:
             
             raise Exception('no position')
@@ -135,15 +164,19 @@ class Backtest(_BacktestUtils):
 
 
     def trade_on_target_position(self, target_position : pd.DataFrame):
-        assert target_position.columns == self.position.columns
+        assert (target_position.columns == self.position.columns).any()
         # assert target_position['ticker'].isin(self.position.ticker.values).all()
 
-        diff = self.position.set_index('ticker').join(target_position.set_index('ticker'), how='outer', lsuffix='left_',
+        diff = self.position.set_index('ticker').drop('cash').join(target_position.set_index('ticker'), how='outer', lsuffix='left_',
                                                       rsuffix='right_')
         diff = diff.fillna(0)
-        diff['diff'] = diff['left_shares'] - diff['right_shares']
-        self.long_portfolio(diff.loc[diff['diff'] > 0, :])
-        self.short_portfolio(diff.loc[diff['diff'] < 0, :])
+        diff['diff'] = diff['sharesright_'] - diff['sharesleft_']
+
+        if (diff['diff'] > 0).any():
+            self.long_portfolio(target_position.set_index('ticker').loc[diff['diff'] > 0, :].reset_index())
+
+        if (diff['diff'] < 0).any():
+            self.short_portfolio(target_position.set_index('ticker').loc[diff['diff'] < 0, :].reset_index())
         return self.position
     
 

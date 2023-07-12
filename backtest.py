@@ -22,16 +22,52 @@ class RiskStrategyBacktest(Backtest):
         self.signal['date'] = pd.to_datetime(self.signal['date'])
         pass
 
-    def on_bar(self, date, data):
+    def on_bar(self, date, data : pd.DataFrame):
+        """
+        The function `on_bar` processes a signal for a given date, calculates the long positions based on
+        the signal, and updates the long portfolio and position accordingly.
+        
+        Args:
+          date: The `date` parameter represents the date for which the `on_bar` function is being called. It
+        is used to filter the `signal` dataframe to get the relevant signals for that date.
+          data: The `data` parameter is a DataFrame that contains the historical price data for various
+        tickers. It has columns such as 'ticker', 'date', and 'close'. The 'ticker' column represents the
+        stock ticker symbol, the 'date' column represents the date of the price data, and the
+        """
 
         signal = self.signal.loc[self.signal['date'] == date].drop('date', axis=1).squeeze()
 
-        if signal[signal == 1]:
-            self.long('300', 1000, data['close'].values[-1])
-            self.position.loc[self.position['ticker'] == 'cash', 'shares'] -= 1000 * data['close'].values[-1]
-        
-        pass
+        # 入场规则
+        if (signal == 1).any():
+            signal = signal[signal == 1]
+            long = signal.to_frame('percentage').reset_index().rename(columns={'index': 'ticker'})
+            long['percentage'] = long['percentage'] / long['percentage'].sum()
+            long['price'] = data.set_index('ticker')['close'].loc[long.ticker.values].values
+            long['cost'] = long['price']
+            long['shares'] = self.cash() * long['percentage'] //  long['cost']
 
+            if (long['shares'] > 0).any():
+                self.long_portfolio(long[['ticker', 'shares', 'price', 'cost']])
+
+        self.update_portfolio(data.set_index('ticker')['close'])
+        self.out_signal()
+        pass
+    
+    def out_signal(self):
+        '''out signal'''
+        if self.position.set_index('ticker').drop('cash').shape[0] > 0:
+            '''止损清仓'''
+            stop_sell = self.position.loc[self.position['price'] / self.position['cost'] - 1 < -0.025]
+            if not stop_sell.empty:
+                self.short_portfolio(stop_sell)
+            
+            '''止盈清仓'''
+            limit_sell = self.position.loc[self.position['price'] / self.position['cost'] - 1 > 0.05]
+            if not limit_sell.empty:
+                self.short_portfolio(limit_sell)
+    
+        return self.signal
+    
 def calculate_risk(data, setting):
         tool = StockIndex()
         tool.set_am(data)
@@ -90,17 +126,18 @@ if __name__ == '__main__':
     risk = risk.swaplevel().squeeze().unstack()
 
     signal = pd.DataFrame(np.zeros(risk.shape), index=risk.index, columns=risk.columns)
-    signal[(risk.shift(1) > 12) & (risk < 10)] = 1
+    signal[(risk.shift(1) > 15) & (risk < 10)] = 1
     signal = signal.reset_index().rename(columns={0 : 'date'})
     
     test = RiskStrategyBacktest(signal)
     test.load_config({
         'start_date' : '2018-01-01',
         'end_date' : '2022-12-31',
-        'initial_account' : 1000000})
+        'initial_account' : 10000})
     
     test.load_data(data)
     test.run()
+    print(test.return_value_records())
 
 
 
