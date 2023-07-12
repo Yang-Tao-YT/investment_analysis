@@ -9,7 +9,8 @@
     }, 
     "terminal.integrated.env.windows": { 
         "PYTHONPATH": "${workspaceFolder}/", 
-    }
+    },
+    "docwriter.style": "Auto-detect"
 }
 
 

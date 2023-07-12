@@ -1,6 +1,6 @@
 from data.database import _get_hs300_history_options
 import pandas as pd
-from .strategy import Strategy
+from .option_strategy import Strategy
 
 class StrangleOption(Strategy):
 

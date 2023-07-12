@@ -3,7 +3,7 @@ import pandas as pd
 import time
 import os
 import option_strategy
-from data.genenrate_data import DataLoader
+from data.generate_data import DataLoader
 from strategy.factor_cross_section import main as cross_section
 st.set_page_config(
 page_title="investing analysis",  #页面标题

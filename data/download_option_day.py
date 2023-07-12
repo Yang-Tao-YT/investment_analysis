@@ -1,4 +1,4 @@
-from .genenrate_data import DataLoader
+from .generate_data import DataLoader
 import pandas as pd
 
 

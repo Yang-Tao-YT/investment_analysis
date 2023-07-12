@@ -1,79 +1,46 @@
 from utils.basic import name_2_symbol, rename_dataframe, Bar
 from collections import defaultdict
-
-
+from backtesting.stock_backtest import Backtest
+from data.database import _get_hs300_history
 import numpy as np
 import pandas as pd
 
 import config
 
-from option_strategy import Trading
-from stock_strategy import StockIndex, barloader, stock_etf_hist_dataloader
+from stock_strategy import StockIndex
 from utils.plot import plot_kline_volume_signal_adept
 
 
 def get_put(data):
     return data.loc[(data.tradecode.str.contains('P'))]
 
-class TestStrategy(bt.Strategy):
+class RiskStrategyBacktest(Backtest):
+    signal : pd.DataFrame
 
-    def log(self, txt, dt=None):
-        ''' Logging function for this strategy'''
-        dt = dt or self.datas[0].datetime.date(0)
-        print('%s, %s' % (dt.isoformat(), txt))
-        print(self.datas[0])
+    def __init__(self, signal : pd.DataFrame, **kwargs):
+        self.signal = signal
+        self.signal['date'] = pd.to_datetime(self.signal['date'])
+        pass
 
-    def __init__(self):
-        # Keep a reference to the "close" line in the data[0] dataseries
-        self.dataclose = self.datas[0].close
+    def on_bar(self, date, data):
 
-    def next(self):
-        # Simply log the closing price of the series from the reference
-        self.log('Close, %.2f' % self.dataclose[0])
+        signal = self.signal.loc[self.signal['date'] == date].drop('date', axis=1).squeeze()
 
-class BackTest:
-
-    position = {'long':[], 'short':[]}
-    trading_history = []
-    bar = Bar()
-
-    with open('trade_logs.log', 'w') as file:
-
-        file.write('new logs here')
+        if signal[signal == 1]:
+            self.long('300', 1000, data['close'].values[-1])
+            self.position.loc[self.position['ticker'] == 'cash', 'shares'] -= 1000 * data['close'].values[-1]
         
-    def __init__(self,) -> None:
         pass
 
-    def long( self, code, position,  price):
-        self.on_order('long', code, price, position)
-        pass
+def calculate_risk(data, setting):
+        tool = StockIndex()
+        tool.set_am(data)
+        if setting is not None:
+            tool.update_setting(setting=setting)
 
-    def short(self, code, position,  price):
-        self.on_order('short', code, price, position)
+        risk = tool.risk()
+        return risk.set_index(0)
 
-        pass
-
-    def on_order(self, direction, code, price, position):
-        self.trading_history.append([direction, code, price, position])
-        self.position[direction].append([code, price, position])
-        pass
-
-    def on_trade(self):
-        pass
-    
-    def balance(self, bar = None):
-        if bar is None:
-            bar = self.bar
-        print(self.position)
-        value = 0
-        for direction in self.position:
-            for position in self.position[direction]:
-                value += bar.close.loc[position[0]] * position[2]
-        
-        return value
-
-    def update_bar(self, df):
-        self.bar.update_bar(df)
 
 def load_history_data(source = 'sina'):
     data = pd.read_csv(f'{config.path_to_save}/history/500etf.csv', index_col=0)
@@ -95,36 +62,69 @@ def return_stockindex(symbol, setting : dict = None) -> StockIndex:
         stockindex.update_setting(setting=setting)
     return stockindex
 
+def load_history_data():
+    data = {}
+    for key, value in name_2_symbol.items():
+        symbol = value
+        data[symbol] =  pd.read_csv(f'{config.path_hist_k_data}/{symbol}.csv')
+        print(symbol)
+        print('----------------')
 
+    return data
 
 if __name__ == '__main__':
 
-
-    # test = BackTest()
-
     # load data
-    data = return_stockindex('sh515790')
-    data = rename_dataframe(data.origin_data)
-    data = data.iloc[:, :6]
-    data.index = pd.to_datetime(data.index)
-    cerebro = bt.Cerebro()
-    cerebro.addstrategy(TestStrategy)
+    data = load_history_data()
+    data = pd.concat(data).reset_index()
+    data = data.rename(columns={'level_0': 'ticker',
+                        '日期' : 'date',
+                        '執行時間' : 'time',
+                        '开盘' : 'open',
+                        '收盘' : 'close',
+                        '最高' : 'high',
+                        '最低' : 'low',
+                        '成交量' : 'volume',})
+    # generate signal
+    risk = data.groupby('ticker').apply(calculate_risk, {'ma_window' : 3})
+    risk = risk.swaplevel().squeeze().unstack()
 
-    data_feed = bt.feeds.PandasData(dataname=data,
-                                    # fromdate=start_date,
-                                    # todate=end_date
-                                    )
-    cerebro.adddata(data_feed)
-
-    cerebro.broker.setcash(100000.0)
-
-    # Print out the starting conditions
-    print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())
-
-    # Run over everything
-    cerebro.run()
-
-    # Print out the final result
-    print('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
+    signal = pd.DataFrame(np.zeros(risk.shape), index=risk.index, columns=risk.columns)
+    signal[(risk.shift(1) > 12) & (risk < 10)] = 1
+    signal = signal.reset_index().rename(columns={0 : 'date'})
     
-    1
+    test = RiskStrategyBacktest(signal)
+    test.load_config({
+        'start_date' : '2018-01-01',
+        'end_date' : '2022-12-31',
+        'initial_account' : 1000000})
+    
+    test.load_data(data)
+    test.run()
+
+
+
+    # data = rename_dataframe(data.origin_data)
+    # data = data.iloc[:, :6]
+    # data.index = pd.to_datetime(data.index)
+    # cerebro = bt.Cerebro()
+    # cerebro.addstrategy(TestStrategy)
+
+    # data_feed = bt.feeds.PandasData(dataname=data,
+    #                                 # fromdate=start_date,
+    #                                 # todate=end_date
+    #                                 )
+    # cerebro.adddata(data_feed)
+
+    # cerebro.broker.setcash(100000.0)
+
+    # # Print out the starting conditions
+    # print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())
+
+    # # Run over everything
+    # cerebro.run()
+
+    # # Print out the final result
+    # print('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
+    
+    # 1

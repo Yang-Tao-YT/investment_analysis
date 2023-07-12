@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import Callable, Dict, Tuple, Union, Optional
 import talib
-from data.genenrate_data import AkShare, Request, DataLoader
+from data.generate_data import AkShare, Request, DataLoader
 import utils.basic as basic
 
 import config
@@ -32,6 +32,23 @@ class ArrayManager(object):
         self.date: np.ndarray = np.zeros(size)
 
     def update_hist(self, hist : pd.DataFrame) -> None:
+        """
+        The function `update_hist` takes a DataFrame `hist` as input and updates several arrays with the
+        corresponding columns from `hist`.
+        
+        Args:
+          hist (pd.DataFrame): The parameter `hist` is expected to be a pandas DataFrame containing
+        historical data for a financial instrument. It should have the following columns:
+                open
+                high
+                low
+                close
+                volume
+                date
+        Returns:
+          The function does not explicitly return anything.
+        """
+        ''''''
         self.open_array: np.ndarray = np.array(hist['open'])
         self.high_array: np.ndarray = np.array(hist['high'])
         self.low_array: np.ndarray = np.array(hist['low'])
@@ -609,7 +626,7 @@ class StockIndex(Indicator):
         if am is None:
             am = self.am
 
-        return pd.DataFrame(zip(self.am.date, super()._risk(am)))
+        return pd.DataFrame(zip(self.am.date, self._risk(am)))
 
     def rsi(self,am = None):
         if am is None:

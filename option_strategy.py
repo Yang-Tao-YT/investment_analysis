@@ -6,7 +6,7 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 from functools import partial
-from data.genenrate_data import DataLoader
+from data.generate_data import DataLoader
 from utils.basic import rename_dataframe
 
 def get_put(data):

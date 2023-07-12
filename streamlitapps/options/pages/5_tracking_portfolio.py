@@ -3,7 +3,7 @@ import pandas as pd
 import time
 import os
 import option_strategy
-from data.genenrate_data import DataLoader
+from data.generate_data import DataLoader
 from utils.basic import rename_dataframe, Bar
 from stock_strategy import StockIndex, stock_etf_hist_dataloader
 
