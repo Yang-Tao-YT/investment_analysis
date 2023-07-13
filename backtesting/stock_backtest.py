@@ -24,6 +24,14 @@ class Backtest(_BacktestUtils):
         pass
     
     def load_data(self, kdata : pd.DataFrame):
+        """
+        The function `load_data` renames the columns of a DataFrame and converts the 'date' column to
+        datetime format.
+        
+        Args:
+          kdata (pd.DataFrame): kdata is a pandas DataFrame containing stock market data. It has the
+        following columns:
+        """
         kdata = kdata.rename(
             columns = { '日期' : 'date',
                         '執行時間' : 'time',
@@ -36,16 +44,43 @@ class Backtest(_BacktestUtils):
         kdata['date'] = pd.to_datetime(kdata['date'])
         self.kdata = kdata
 
-
     def load_config(self, config : dict = None):
+        """
+        The function `load_config` takes a dictionary as input and sets the attributes of the object to the
+        corresponding values in the dictionary.
+        
+        Args:
+          config (dict): The `config` parameter is a dictionary that contains key-value pairs. Each key
+        represents a configuration option, and the corresponding value represents the value for that
+        configuration option.
+        """
         if config is not None:
             for key in config:
                 setattr(self, key, config[key])
 
     def cash(self):
+        """
+        The code defines a function named "cash" that returns the number of shares of cash in a position,
+        and a function named "on_bar" that takes in a date and data as parameters but does not have any code
+        inside it.
+        
+        Returns:
+          The `cash` method is returning the number of shares of cash held in the `position` DataFrame.
+        """
         return self.position.loc[self.position['ticker'] == 'cash', 'shares'].squeeze()
 
     def on_bar(self, date, data):
+        """
+        The function "on_bar" takes in a date and data as parameters and does nothing.
+        
+        Args:
+          date: The date parameter represents the date of the bar event. It could be a specific date or a
+        timestamp indicating when the bar event occurred.
+          data: The "data" parameter in the "on_bar" function is a variable that represents the data
+        received for a specific date. The exact format and content of the data would depend on the context
+        and purpose of the function. It could be a list, dictionary, or any other data structure that
+        contains relevant
+        """
         pass
     
     def return_value_records(self):
@@ -161,7 +196,6 @@ class Backtest(_BacktestUtils):
             raise Exception('no position')
         
         return self.position
-
 
     def trade_on_target_position(self, target_position : pd.DataFrame):
         assert (target_position.columns == self.position.columns).any()
