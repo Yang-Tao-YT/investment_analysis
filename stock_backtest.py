@@ -7,7 +7,6 @@ import pandas as pd
 
 import config
 from utils.basic import name_2_symbol, rename_dataframe, Bar
-from option_strategy import Trading
 from stock_strategy import StockIndex, barloader, stock_etf_hist_dataloader, ArrayManager, Indicator
 from utils.plot import plot_kline_volume_signal_adept
 

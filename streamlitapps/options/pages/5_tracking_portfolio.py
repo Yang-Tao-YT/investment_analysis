@@ -15,7 +15,6 @@ initial_sidebar_state="auto" #侧边栏
 )
 
 if 'loader' not in st.session_state:
-    trad = option_strategy.Trading()
     st.session_state['loader'] = loader =  DataLoader()
     st.session_state['trad'] = trad = option_strategy.Trading()
 

@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import option_strategy
 from data.generate_data import DataLoader
-from strategy.宽跨 import StrangleOption
+from strategy.option.宽跨 import StrangleOption
 import pandas as pd
 import streamlit as st
 from streamlitapps.apps_utils import display_returns_scale

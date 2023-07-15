@@ -54,9 +54,28 @@ class StrangleOption(Strategy):
         return (up,down)
 
     def generate_portfolios(self,  data = None, year = None, std = 0.075,  round_type = 'down'):
+        """
+        The function `generate_portfolios` generates portfolios of call and put options based on historical
+        data, with the option to specify a target standard deviation and rounding type.
+        
+        Args:
+          data: The `data` parameter is a pandas DataFrame that contains historical data for options
+        contracts. If no `data` is provided, the function will try to retrieve historical data for the HS300
+        index options for the specified `year`.
+          year: The `year` parameter is used to specify the year for which the portfolios need to be
+        generated. If the `data` parameter is not provided, the function will use the
+        `_get_hs300_history_options()` function to fetch the historical data for the specified year.
+          std: The `std` parameter in the `generate_portfolios` function represents the standard deviation.
+        It is used as a threshold value for selecting contracts. 
+          round_type: The `round_type` parameter determines how the calculated values will be rounded. It
+        can take two values:. Defaults to down
+        
+        Returns:
+          a dictionary named "result".
+        """
         if data is None:
             if year is None:
-                Warning('year and data cannot be None')
+                raise Exception('year and data cannot be None')
                 return
             
             data = _get_hs300_history_options(year)
@@ -79,6 +98,9 @@ class StrangleOption(Strategy):
 
 
         return result
+    
+
+    
 
 
 

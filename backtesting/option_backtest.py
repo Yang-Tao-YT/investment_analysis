@@ -1,4 +1,4 @@
-from strategy.宽跨 import StrangleOption
+from strategy.option.宽跨 import StrangleOption
 from data.database import _get_hs300_history_options, _get_hs300_history, _get_hs300_history_unadjust
 from utils.calculate import calculate_call_margin, calculate_put_margin, calculate_mergin
 import pandas as pd
