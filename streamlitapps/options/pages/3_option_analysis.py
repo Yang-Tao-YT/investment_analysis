@@ -233,7 +233,7 @@ with tabs[2]:
     with tabs2_cols[1]:
         # 计算保证金和收益
         margin = spred.margin(contracts['执行价'].iloc[1], contracts['执行价'].iloc[0], contracts['最新价'].iloc[1], contracts['最新价'].iloc[0])
-
+        st.write(contracts)
         if contracts_type == '购':
 
             returns = spred.bullspread_call(
