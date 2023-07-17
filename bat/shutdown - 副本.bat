@@ -1,0 +1,1 @@
+shutdown /sg /t 30

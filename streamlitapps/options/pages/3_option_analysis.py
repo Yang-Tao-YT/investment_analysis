@@ -3,10 +3,10 @@ import pandas as pd
 import option_strategy
 from data.generate_data import DataLoader
 from strategy.option.宽跨 import StrangleOption
-from strategy.option.spred import  Spred
+
 import pandas as pd
 import streamlit as st
-from streamlitapps.options.strategy_ import strangle, multichoice_strangle
+from streamlitapps.options.strategy_ import strangle, multichoice_strangle, _spred
 from utils.basic import name_2_symbol, rename_dataframe, Bar
 from stock_strategy import StockIndex, stock_etf_hist_dataloader
 
@@ -86,9 +86,9 @@ contracts_amount = st.number_input('手数', value = 0)
 
 data = data.loc[data['剩余日'] ==  days].copy()
 
-tabs = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差', '看涨价差定制'])
+tabs = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差', '看涨价差定制', '多个功能'])
 
-
+st.write('-' * 20)
 if tabs ==  '宽跨':
     strangle(data, bar, price, contracts_amount, account_amount)
 
@@ -98,94 +98,33 @@ if tabs ==  '宽跨定制':
 
 if tabs ==  '看涨价差':
     #读取剩余日
-    spred = Spred()
-    tabs2_cols = st.columns(3)
-    # days = st.selectbox('剩余日' , days, index = 0) #剩余日
-    # account_amount = st.number_input('成本/万', value = 70) * 10000
-    # contracts_amount = st.number_input('手数', value = 0)
+    _spred(price, data)
 
-    # data = data.loc[data['剩余日'] ==  days].copy()
-    # with cols[2]:
-    #     display_returns_scale(bar, '23')
+if tabs ==  '多个功能':
+    mulfun = st.columns(2)
+    with mulfun[0]:
+        mulfun_tabs1 = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差'], key='mulfun0')
+        if mulfun_tabs1 ==  '宽跨':
+            strangle(data, bar, price, contracts_amount, account_amount)
 
-    with tabs2_cols[1]:
-        #select contracts types
-        contracts_type = st.selectbox('期权类型', ['购' , '沽'])
-        #select contracts
-        spred_contracts =  data.loc[data.名称.str.contains(contracts_type)].sort_values('行权价')
-        up = st.selectbox('up', [None] + list(spred_contracts.行权价), index=0)
-        down = st.selectbox('down', [None] + list(spred_contracts.行权价), index=0)
-        # var
-        # up = 3.7
-        # down = 3.6
+        if mulfun_tabs1 ==  '宽跨定制':
+            '''多个选择'''
+            multichoice_strangle(data, price, contracts_amount, account_amount)
 
-        contracts = pd.concat( spred.chose_contract(data, spred_type=contracts_type.replace('购', 'C').replace('沽', 'P'),current_price= price.origin_data['close'][-1]))
+        if mulfun_tabs1 ==  '看涨价差':
+            #读取剩余日
+            _spred(price, data)
 
-        if up is not None:
-            contracts.loc[contracts.index[0], 
-                          spred_contracts.loc[spred_contracts.行权价 == up].rename(columns = {'行权价' : '执行价'}
-                                                              ).columns] = list( spred_contracts.loc[spred_contracts.行权价 == up].squeeze())
+    with mulfun[1]:
+        mulfun_tabs1 = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差'], key='mulfun1', index = 2)
+        if mulfun_tabs1 ==  '宽跨':
+            strangle(data, bar, price, contracts_amount, account_amount)
 
-        if down is not None:
-            contracts.loc[contracts.index[1], 
-                          spred_contracts.loc[spred_contracts.行权价 == down].rename(columns = {'行权价' : '执行价'}
-                                                           ).columns] = list( spred_contracts.loc[spred_contracts.行权价 == down].squeeze())
+        if mulfun_tabs1 ==  '宽跨定制':
+            '''多个选择'''
+            multichoice_strangle(data, price, contracts_amount, account_amount)
 
-        contracts.insert(3, '比例', contracts['执行价'] / price.origin_data['close'][-1] - 1)
+        if mulfun_tabs1 ==  '看涨价差':
+            #读取剩余日
+            _spred(price, data)
 
-    with tabs2_cols[1]:
-        # 计算保证金和收益
-        margin = spred.margin(contracts['执行价'].iloc[1], contracts['执行价'].iloc[0], contracts['最新价'].iloc[1], contracts['最新价'].iloc[0])
-        st.write(contracts)
-        if contracts_type == '购':
-
-            returns = spred.bullspread_call(
-                    K1 = contracts['执行价'].iloc[1],
-                    K2 = contracts['执行价'].iloc[0],
-                    C1 = contracts['最新价'].iloc[1],
-                    C2 = contracts['最新价'].iloc[0],
-                    P0 = price.origin_data['close'][-1],
-                    P0_index=price.origin_data['close'][-1],
-                    Pt_index= contracts['执行价'].iloc[0] * 1.1,
-                    N1=1,
-                    N2=1,
-                    N_underlying=1
-            )[-1]
-            returns = returns / margin
-
-            equanpoint = spred.equant_point_call(                    
-                        K1 = contracts['执行价'].iloc[1],
-                        # K2 = contracts['执行价'].iloc[0],
-                        C1 = contracts['最新价'].iloc[1],
-                        C2 = contracts['最新价'].iloc[0],)
-            
-            stats = pd.Series({'收益率' : returns * 100, '均衡价' : equanpoint , '均衡率' : equanpoint / price.origin_data['close'][-1] - 1})
-
-            st.write(stats)
-        else:
-            returns = spred.bullspread_put(
-                    K1 = contracts['执行价'].iloc[1],
-                    K2 = contracts['执行价'].iloc[0],
-                    P1 = contracts['最新价'].iloc[1],
-                    P2 = contracts['最新价'].iloc[0],
-                    P0 = price.origin_data['close'][-1],
-                    P0_index=price.origin_data['close'][-1],
-                    Pt_index= contracts['执行价'].iloc[0] * 1.1,
-                    N1=1,
-                    N2=1,
-                    N_underlying=1
-            )[-1]
-            returns = returns / margin
-
-            equanpoint = spred.equant_point_put(                    
-                        # K1 = contracts['执行价'].iloc[1],
-                        K2 = contracts['执行价'].iloc[0],
-                        P1 = contracts['最新价'].iloc[1],
-                        P2 = contracts['最新价'].iloc[0],)
-            
-            stats = pd.Series({'收益率' : returns * 100, 
-                               '均衡价' : equanpoint , 
-                               '均衡率' : equanpoint / price.origin_data['close'][-1] - 1,
-                               '保证金' : margin},)
-
-            st.write(stats)
