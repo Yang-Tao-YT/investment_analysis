@@ -253,7 +253,13 @@ class Trading:
         self.position.loc[index, ['Delta', 'Gamma', 'Vega', 'Rho', 'Theta']] = newgeek
 
         #计算涨跌额
-        self.position.insert(9,'涨跌额',self.bar.df.loc[index , '涨跌额']* self.position.loc[index , '实际持仓'] * 10000 *  self.position.loc[index, '持仓类型'])
+        
+        percent = (self.bar.df.loc[index , '涨跌额']* self.position.loc[index , '实际持仓'] * 
+                                        10000 *  self.position.loc[index, '持仓类型']).to_frame('涨跌额') ; percent.index.name = '代码'
+        
+        # self.position.insert(9,'涨跌额', list(percent.values) + [None])
+        self.position.loc[index, '涨跌额'] = percent.squeeze()
+        self.position = self.position.iloc[: , list(range(8)) + [len(self.position.columns) - 1] + list(range(8, len(self.position.columns)-1))]
         self.position.insert(2,'涨跌幅',self.bar.df.loc[index , '涨跌幅'])
 
         self.position.loc['统计',['浮动盈亏', '合约市值', '涨跌额','Delta', 'Gamma', 'Vega', 'Rho', 'Theta'] ] = (

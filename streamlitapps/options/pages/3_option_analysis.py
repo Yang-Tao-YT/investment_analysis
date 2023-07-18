@@ -98,7 +98,7 @@ if tabs ==  '宽跨定制':
 
 if tabs ==  '看涨价差':
     #读取剩余日
-    _spred(price, data)
+    _spred(price, data, contracts_amount)
 
 if tabs ==  '多个功能':
     mulfun = st.columns(2)
@@ -113,7 +113,7 @@ if tabs ==  '多个功能':
 
         if mulfun_tabs1 ==  '看涨价差':
             #读取剩余日
-            _spred(price, data)
+            _spred(price, data, contracts_amount)
 
     with mulfun[1]:
         mulfun_tabs1 = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差'], key='mulfun1', index = 2)
@@ -126,5 +126,5 @@ if tabs ==  '多个功能':
 
         if mulfun_tabs1 ==  '看涨价差':
             #读取剩余日
-            _spred(price, data)
+            _spred(price, data, contracts_amount)
 

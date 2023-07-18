@@ -8,9 +8,18 @@ from strategy.option.spred import  Spred
 def strangle(data, bar, price, contracts_amount, account_amount):
     cols = st.columns([1,1])
          
-
     with cols[1]:
-        display_returns_scale(bar)
+        
+        data.insert(3, '比例', data['行权价'] / price.origin_data['close'][-1] - 1)
+        calls = data.loc[data.名称.str.contains('购')].sort_values('行权价')
+        puts =  data.loc[data.名称.str.contains('沽')].sort_values('行权价')
+        calls['type'] = 'C'; puts['type'] = 'P'
+
+
+        st.write(    calls.set_index('行权价')[['最新价', '比例']].join(puts.set_index('行权价')[['最新价']],
+                                                          lsuffix = 'calls_', rsuffix = 'puts_')
+)
+
 
     with cols[0]:
         #select contracts
@@ -30,7 +39,8 @@ def strangle(data, bar, price, contracts_amount, account_amount):
             contracts.loc[contracts.名称.str.contains('沽'), puts.loc[puts.行权价 == put].rename(columns = {'行权价' : '执行价'}).columns] = list( puts.loc[puts.行权价 == put].squeeze())
 
 
-        contracts.insert(3, '比例', contracts['执行价'] / price.origin_data['close'][-1] - 1)
+
+
 
     with cols[0]:
         _price = price.origin_data; _price['前收盘'] = _price['close'].shift()
@@ -115,7 +125,7 @@ def multichoice_strangle(data, price, contracts_amount, account_amount):
 
 
 
-def _spred(price, data):
+def _spred(price, data, contracts_amount =  0):
         
     spred = Spred()
     tabs2_cols = st.columns(3)
@@ -150,7 +160,7 @@ def _spred(price, data):
                           spred_contracts.loc[spred_contracts.行权价 == down].rename(columns = {'行权价' : '执行价'}
                                                            ).columns] = list( spred_contracts.loc[spred_contracts.行权价 == down].squeeze())
 
-        contracts.insert(3, '比例', contracts['执行价'] / price.origin_data['close'][-1] - 1)
+        # contracts.insert(3, '比例', contracts['执行价'] / price.origin_data['close'][-1] - 1)
 
         # 计算risk指标
         contracts['pecentage'] = [1, -1]
@@ -181,7 +191,7 @@ def _spred(price, data):
                     N1=1,
                     N2=1,
                     N_underlying=1
-            )[-1]
+            )[-1] - 0.0006
             returns = returns / margin
 
             equanpoint = spred.equant_point_call(                    
@@ -205,7 +215,7 @@ def _spred(price, data):
                     N1=1,
                     N2=1,
                     N_underlying=1
-            )[-1]
+            )[-1] - 0.0006
             returns = returns / margin
 
             equanpoint = spred.equant_point_put(                    
@@ -220,3 +230,7 @@ def _spred(price, data):
                                '保证金' : margin},)
 
             st.write(stats)
+
+        if contracts_amount != 0:
+            st.info(f'收益为{round(returns * margin  * contracts_amount, 3)} 万')
+            st.info(f'使用保证金{round(margin * contracts_amount, 3)} 万')
