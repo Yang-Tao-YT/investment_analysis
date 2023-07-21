@@ -80,14 +80,21 @@ elif symbol_chs == '创业板指':
     data = data.loc[data.名称.str.startswith('创业板')]
 elif symbol_chs == '科创50':
     data = data.loc[data.名称.str.startswith('科创50')]
+
 #添加risk指标
 data = data.join(greek.set_index('期权代码')[['实际杠杆比率' ,  'Delta' ,  'Gamma'  ,  'Vega'  ,   'Rho',   'Theta']])
 days = data['剩余日'].unique() ; days.sort()
 
-#读取剩余日
-days = st.selectbox('剩余日' , days, index = 1) #剩余日
-account_amount = st.number_input('成本/万', value = 70) * 10000
-contracts_amount = st.number_input('手数', value = 0)
+#选择剩余日，或者设置手数，或者设置成本
+set_cols = st.columns(4)
+with set_cols[0]:
+    days = st.selectbox('剩余日' , days, index = 1) #剩余日
+with set_cols[1]:
+    account_amount = st.number_input('成本/万', value = 70) * 10000
+with set_cols[2]:
+    contracts_amount = st.number_input('手数', value = 0)
+with set_cols[3]:
+    fees = st.number_input('fees / 万', value = 3.0) / 10000
 
 data = data.loc[data['剩余日'] ==  days].copy()
 
@@ -95,41 +102,41 @@ tabs = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差', '看�
 
 st.write('-' * 20)
 if tabs ==  '宽跨':
-    strangle(data, bar, price, contracts_amount, account_amount)
+    strangle(data, bar, price, contracts_amount, account_amount, fees)
 
 if tabs ==  '宽跨定制':
     '''多个选择'''
-    multichoice_strangle(data, price, contracts_amount, account_amount)
+    multichoice_strangle(data, price, contracts_amount, account_amount, fees)
 
 if tabs ==  '看涨价差':
     #读取剩余日
-    _spred(price, data, contracts_amount)
+    _spred(price, data, contracts_amount, fees)
 
 if tabs ==  '多个功能':
     mulfun = st.columns(2)
     with mulfun[0]:
         mulfun_tabs1 = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差'], key='mulfun0')
         if mulfun_tabs1 ==  '宽跨':
-            strangle(data, bar, price, contracts_amount, account_amount)
+            strangle(data, bar, price, contracts_amount, account_amount, fees)
 
         if mulfun_tabs1 ==  '宽跨定制':
             '''多个选择'''
-            multichoice_strangle(data, price, contracts_amount, account_amount)
+            multichoice_strangle(data, price, contracts_amount, account_amount, fees)
 
         if mulfun_tabs1 ==  '看涨价差':
             #读取剩余日
-            _spred(price, data, contracts_amount)
+            _spred(price, data, contracts_amount, fees)
 
     with mulfun[1]:
         mulfun_tabs1 = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差'], key='mulfun1', index = 2)
         if mulfun_tabs1 ==  '宽跨':
-            strangle(data, bar, price, contracts_amount, account_amount)
+            strangle(data, bar, price, contracts_amount, account_amount, fees)
 
         if mulfun_tabs1 ==  '宽跨定制':
             '''多个选择'''
-            multichoice_strangle(data, price, contracts_amount, account_amount)
+            multichoice_strangle(data, price, contracts_amount, account_amount, fees)
 
         if mulfun_tabs1 ==  '看涨价差':
             #读取剩余日
-            _spred(price, data, contracts_amount)
+            _spred(price, data, contracts_amount, fees)
 

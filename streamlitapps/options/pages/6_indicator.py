@@ -22,8 +22,10 @@ def calcualte_indicator(x, setting = None):
     result = cross_section(if_save=False, setting = setting)
     indicator = result.indicator
     bar = result.bar
-    bar = {k: str(round(v * 100, 2)) + '%' for k,v in bar.items()}
-    df = pd.DataFrame({'risk' : indicator, '当日涨跌' : bar, 'quantile' : result.quantile}).sort_values('risk')
+    percent = result.percent
+    percent = {k: str(round(v * 100, 2)) + '%' for k,v in percent.items()}
+
+    df = pd.DataFrame({'risk' : indicator, '当日涨跌' : percent, 'quantile' : result.quantile, 'bar' : bar}).sort_values('risk')
 
     # df = pd.DataFrame([indicator, bar, result.quantile], index = ['risk', '当日涨跌', 'quantile']).T.sort_values('risk')
     return df

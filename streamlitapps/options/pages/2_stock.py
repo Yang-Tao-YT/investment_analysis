@@ -29,11 +29,14 @@ initial_sidebar_state="auto" #侧边栏
 today = datetime.datetime.today().date()
 cols  = st.columns(2)
 
+debug = 1
+if debug:
+    st.session_state = {}
 
 if 'init' not in st.session_state:
-    st.session_state.init = 1
-    st.session_state.plot = 0
-    st.session_state.risk_quantile = 0
+    st.session_state['init'] = 1
+    st.session_state['plot'] = 0
+    st.session_state['risk_quantile'] = 0
 
 
 
@@ -81,7 +84,7 @@ def return_indicator(indicator):
     return eval(f'stockindex_copy.{indicator[0]}().iloc[-20:, :]')
 
 def check_date(x):
-    return ((pd.to_datetime(x).day_of_week == 2) and ( 21<=pd.to_datetime(x).day)) or (pd.to_datetime(x).day == 1)
+    return ((pd.to_datetime(x).day_of_week == 2) and ( 21 <= pd.to_datetime(x).day)) or (pd.to_datetime(x).day == 1)
 
 def history_return_hist(days):
         df : pd.DataFrame
@@ -229,7 +232,7 @@ with cols[1]:
     rerun = st.button('rerun')
 
 if st.button('plot'):
-    st.session_state.plot = 1 - st.session_state.plot
+    st.session_state['plot'] = 1 - st.session_state['plot']
 
 tabs = st.tabs(['risk', 'history return', 'risk_quantile'])
 
@@ -243,9 +246,9 @@ with tabs[1]:
 with tabs[2]:
     # 计算risk收益分布
     if st.button('risk_quantile'):
-        st.session_state.risk_quantile = 1 - st.session_state.risk_quantile
+        st.session_state['risk_quantile'] = 1 - st.session_state['risk_quantile']
         
-    if st.session_state.risk_quantile:
+    if st.session_state['risk_quantile']:
         result = result.dropna()
         # np.histogram(result, density=True)[0]
 
@@ -256,8 +259,9 @@ with tabs[2]:
         components.html( plot_bar(x_value, value),width=1800, height=500)
 
 
-if st.session_state.plot:
+if st.session_state['plot']:
 # if 1:
+        pic_col = st.columns([5,1])
         # stockindex.origin_data['risk'] = list(stockindex.risk()[1].squeeze())
         stockindex.origin_data = stockindex.origin_data.join(result)
         result = plot_kline_volume_signal_adept(stockindex.origin_data, indicator )
@@ -265,8 +269,15 @@ if st.session_state.plot:
         # result.index.name = 'index'
         # st.line_chart(result)
         result = result.render_embed()
-        st.write('##### plotting')
-        components.html(result,width=1800, height=3000)
+        with pic_col[0]:
+            st.write('##### plotting')
+
+            components.html(result,width=1800, height=3000)
+
+        with pic_col[1]:
+            start = st.date_input('start', datetime.date(2021,1,1))
+            end = st.date_input('end', datetime.date(2021,12,31))
+
 
 
 

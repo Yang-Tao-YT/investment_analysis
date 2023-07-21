@@ -50,6 +50,7 @@ sys.path.append(str(pathlib.Path().absolute()).split("/src")[0] )
 
 df = pd.read_csv('stock_position.csv', index_col=0)
 # df['名称'] = df['名称'].astype(str)
+df.index = df.index.astype(str)
 df['平均成本'] = df['平均成本'].astype(float)
 df['持仓数量'] = df['持仓数量'].astype(int)
 df['持仓成本'] = df['持仓数量'] * df['平均成本']

@@ -117,7 +117,7 @@ if os.path.exists('position.csv'):
             # step=1,
             format="%.2f %%",
         )
-    })
+    } , height=trad.position.shape[0] * 40)
     st.info(f"浮动盈亏 {profit}")
     st.info(f"potential earning : {trad.position.loc['统计', ['合约市值','浮动盈亏']].sum().round(2)}")
     st.info(f"earned pctg : {round(profit / trad.position.loc['统计', ['合约市值','浮动盈亏']].sum() * 100,3)} %")

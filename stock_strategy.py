@@ -608,6 +608,8 @@ class Indicator:
         return rsi
 
 class StockIndex(Indicator):
+
+    origin_data : pd.DataFrame
     '''
     计算技术指标
     '''

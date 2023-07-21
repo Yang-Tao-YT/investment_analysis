@@ -5,7 +5,7 @@ from streamlitapps.apps_utils import display_returns_scale
 from utils.calculate import calculate_mergin
 from strategy.option.spred import  Spred
 
-def strangle(data, bar, price, contracts_amount, account_amount):
+def strangle(data, bar, price, contracts_amount, account_amount, fees = 0.0003):
     cols = st.columns([1,1])
          
     with cols[1]:
@@ -16,7 +16,7 @@ def strangle(data, bar, price, contracts_amount, account_amount):
         calls['type'] = 'C'; puts['type'] = 'P'
 
 
-        st.write(    calls.set_index('行权价')[['最新价', '比例']].join(puts.set_index('行权价')[['最新价']],
+        st.write(calls.set_index('行权价')[['最新价', '比例']].join(puts.set_index('行权价')[['最新价']],
                                                           lsuffix = 'calls_', rsuffix = 'puts_')
 )
 
@@ -47,7 +47,7 @@ def strangle(data, bar, price, contracts_amount, account_amount):
         contracts = calculate_mergin(contracts, _price.iloc[-1, :])
         combine_margin = max(contracts['保证金']) + min(contracts['最新价'])
         st.write(contracts)
-        returns = (contracts["最新价"].sum() - 0.0006) / combine_margin 
+        returns = (contracts["最新价"].sum() - fees * 2) / combine_margin 
 
         # 计算risk指标
         contracts['pecentage'] = 1
@@ -60,7 +60,7 @@ def strangle(data, bar, price, contracts_amount, account_amount):
         st.dataframe(risk_indicators)
         
         if contracts_amount != 0:
-            st.info(f'收益为{round((contracts["最新价"].sum() - 0.0006) * contracts_amount, 3)} 万')
+            st.info(f'收益为{round((contracts["最新价"].sum() - fees * 2) * contracts_amount, 3)} 万')
             st.info(f'使用保证金{round(combine_margin * contracts_amount, 3)} 万')
         st.info(f'收益率为{returns * 100} %')
         st.info(f'收益为{round(returns * account_amount / 10000, 3)} 万')
@@ -68,7 +68,7 @@ def strangle(data, bar, price, contracts_amount, account_amount):
     return calls, puts
 
 
-def multichoice_strangle(data, price, contracts_amount, account_amount):
+def multichoice_strangle(data, price, contracts_amount, account_amount, fees = 0.0003):
         calls = data.loc[data.名称.str.contains('购')].sort_values('行权价')
         puts =  data.loc[data.名称.str.contains('沽')].sort_values('行权价')
 
@@ -106,7 +106,7 @@ def multichoice_strangle(data, price, contracts_amount, account_amount):
         contracts = calculate_mergin(contracts, _price.iloc[-1, :])
         combine_margin = max(contracts['保证金']) + min(contracts['最新价'])
         st.write(contracts)
-        returns = (contracts["最新价"].dot(contracts['pecentage']) - 0.0006) / combine_margin 
+        returns = (contracts["最新价"].dot(contracts['pecentage']) - fees * 2) / combine_margin 
         # 计算risk指标
         risk_indicators = contracts[['实际杠杆比率' ,  'Delta' ,  'Gamma'  ,  'Vega'  ,   'Rho',   'Theta']].T.dot(
             contracts['pecentage']) 
@@ -117,7 +117,7 @@ def multichoice_strangle(data, price, contracts_amount, account_amount):
 
         contracts_amount = st.number_input('手数', value = 0, key='123')
         if contracts_amount != 0:
-            st.info(f'收益为{round((contracts["最新价"].dot(contracts["pecentage"]) - 0.0006) * contracts_amount, 3)} 万')
+            st.info(f'收益为{round((contracts["最新价"].dot(contracts["pecentage"]) - fees * 2) * contracts_amount, 3)} 万')
             st.info(f'使用保证金{round(combine_margin * contracts_amount, 3)} 万')
 
         st.info(f'收益率为{returns * 100} %')
@@ -125,7 +125,7 @@ def multichoice_strangle(data, price, contracts_amount, account_amount):
 
 
 
-def _spred(price, data, contracts_amount =  0):
+def _spred(price, data, contracts_amount =  0, fees = 0.0003):
         
     spred = Spred()
     tabs2_cols = st.columns(3)
@@ -191,7 +191,7 @@ def _spred(price, data, contracts_amount =  0):
                     N1=1,
                     N2=1,
                     N_underlying=1
-            )[-1] - 0.0006
+            )[-1] - fees * 2
             returns = returns / margin
 
             equanpoint = spred.equant_point_call(                    
@@ -215,7 +215,7 @@ def _spred(price, data, contracts_amount =  0):
                     N1=1,
                     N2=1,
                     N_underlying=1
-            )[-1] - 0.0006
+            )[-1] - fees * 2
             returns = returns / margin
 
             equanpoint = spred.equant_point_put(                    

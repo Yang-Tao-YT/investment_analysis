@@ -7,7 +7,38 @@ class Results:
     indicator = None
     bar = None
     quantile = None
+    percent = None
 
+class FCS:
+    stock_index : StockIndex = None
+
+    def __init__(self) -> None:
+        pass
+    
+    def clean(self):
+        self.stock_index = None
+
+    def update_setting(self, setting : dict = None):
+        for k,v in setting.items():
+            setattr(self, k, v)
+
+    def obtain_current_stockindex(self, symbol, setting : dict = None):
+        '''获取完故的stockindex'''
+        if self.stock_index is None:
+            self.stock_index = return_stockindex(symbol, setting=setting)
+        return self.stock_index
+    
+    def obtain_current_indicator(self,  indicator = ['risk'], setting=None, preset_close = None):
+        if setting is not None:
+            self.update_setting(setting=setting)
+
+        if preset_close is not None:
+            self.stock_index.am.close_array[-1] = preset_close
+            self.stock_index.origin_data.loc[self.stock_index.origin_data.index[-1] , 'close'] = preset_close
+
+        indicator = return_indicator(indicator=indicator, stockindex_copy = self.stock_index)
+        return indicator
+    
 def return_stockindex(symbol, setting : dict = None):
     '''下载历史数据'''
     stockindex = StockIndex()
@@ -34,11 +65,16 @@ def return_indicator(indicator, stockindex_copy = None):
         return pd.concat(result, axis = 1)
     return eval(f'stockindex_copy.{indicator[0]}().iloc[-20:, :]')
 
-def calculate_indicator(symbol, indicator = ['risk'], setting=None):
+def calculate_indicator(symbol, indicator = ['risk'], setting=None, preset_close = None):
     stockindex = return_stockindex(symbol, setting=setting)
     stockindex_copy = copy.deepcopy(stockindex)
     stockindex_copy.origin_data['pre_close'] = stockindex_copy.origin_data.close.shift(1)
     bar = Bar().update_bar(stockindex_copy.origin_data.iloc[-1,:])
+
+    if preset_close is not None:
+        stockindex_copy.am.close_array[-1] = preset_close
+        stockindex_copy.origin_data.loc[stockindex_copy.origin_data.index[-1] , 'close'] = preset_close
+
     result = return_indicator(indicator=indicator, stockindex_copy = stockindex_copy)
 
     return {'indicator' : result, 'bar' : bar}
@@ -54,14 +90,14 @@ def main(if_save = True, setting = None) -> Results:
 
     #整合
     indicator = {k: v['indicator'].iloc[-1].squeeze() for k, v in result.items()}
-    bar = {k:v['bar'].close/v['bar'].pre_close *1 - 1  for k, v in result.items()}
+    percent = {k:v['bar'].close/v['bar'].pre_close *1 - 1  for k, v in result.items()}
     quantile = {k: v['quantile'].squeeze() for k, v in result.items()}
 
     results = Results() ; 
     results.indicator = indicator; 
-    results.bar = bar
+    results.percent = percent
     results.quantile = quantile
-
+    results.bar = {k:v['bar'].close for k, v in result.items()}
     #保存indicator
     indicator = pd.Series(indicator)
     
