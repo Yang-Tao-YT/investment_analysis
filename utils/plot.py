@@ -4,6 +4,8 @@ from pyecharts.commons.utils import JsCode
 
 width_set = "1400px"
 def plot_kline_volume_signal_adept(data, lines, bars_name = "volume", grid_lines = None, long_short = None, path = '.'):
+
+
     kline = (
             Kline(init_opts=opts.InitOpts(width=width_set,height="1000px")) # 设置画布大小
             .add_xaxis(xaxis_data=list(data.index)) # 将原始数据的index转化为list作为横坐标
@@ -208,6 +210,41 @@ def plot_kline_volume_signal_adept(data, lines, bars_name = "volume", grid_lines
     grid_chart.add(
         bar,
         grid_opts=opts.GridOpts( pos_top="60%", height="30%"
+        ),
+        is_control_axis_index=True
+    )
+
+    return_lines =  (
+                Line()
+                .add_xaxis(xaxis_data=list(data.index))
+                .add_yaxis(
+                    series_name= 'returns',
+                    y_axis=data['涨跌幅'].tolist(),
+                    xaxis_index=2,
+                    yaxis_index=3,
+                    # label_opts=opts.LabelOpts(is_show=False)
+                    )             
+                .set_global_opts(
+                    xaxis_opts=opts.AxisOpts(
+                    type_="category",
+                    grid_index=2,
+                    axislabel_opts=opts.LabelOpts(is_show=False)),                
+                    yaxis_opts=opts.AxisOpts(
+                            is_scale=True,
+                            splitarea_opts=opts.SplitAreaOpts(
+                            is_show=True, areastyle_opts=opts.AreaStyleOpts(opacity=1))
+                            ,name='价格'),
+                        legend_opts=opts.LegendOpts(is_show=False),
+                )
+
+                # .set_series_opts(label_opts = opts.LabelOpts(is_show =True))
+                # .set_global_opts(legend_opts=opts.LegendOpts(is_show=False))
+                # .set_global_opts(visualmap_opts=opts.VisualMapOpts(is_show=False))
+                )
+
+    grid_chart.add(
+        return_lines,
+        grid_opts=opts.GridOpts( pos_top="90%", height="10%"
         ),
         is_control_axis_index=True
     )

@@ -29,7 +29,7 @@ initial_sidebar_state="auto" #侧边栏
 today = datetime.datetime.today().date()
 cols  = st.columns(2)
 
-debug = 1
+debug = 0
 if debug:
     st.session_state = {}
 
@@ -92,7 +92,7 @@ def history_return_hist(days):
         df = stockindex_copy.origin_data.close.copy()
         # df.loc[list(pd.Series(df.index).apply(check_date))]
         df.index  = pd.to_datetime(df.index)
-        df = df.loc[pd.to_datetime('2012-06-01' ): ]
+        df = df.loc[pd.to_datetime('2010-06-01' ): ]
 
         if st.checkbox('exclude extra'):
             df = df.loc[pd.to_datetime('2016-03-01' ): ]
@@ -103,6 +103,8 @@ def history_return_hist(days):
         def returns(x):
             index = list( x.index)
 
+            if len(pd.date_range(index[0],index[-1],freq='WOM-4WED')) == 0:
+                return None
             x = x.loc[:pd.date_range(index[0],index[-1],freq='WOM-4WED')[0]]
 
             if x.shape[0] < days:
@@ -261,7 +263,12 @@ with tabs[2]:
 
 if st.session_state['plot']:
 # if 1:
-        pic_col = st.columns([5,1])
+        start = st.date_input('start', datetime.date(2023,1,1))
+        end = st.date_input('end', datetime.date(2023,12,31))
+
+        
+        st.write(stockindex.origin_data.loc[:end, 'close'][-1]/ stockindex.origin_data.loc[start:, 'open'][0] - 1)
+        # pic_col = st.columns([5,1])
         # stockindex.origin_data['risk'] = list(stockindex.risk()[1].squeeze())
         stockindex.origin_data = stockindex.origin_data.join(result)
         result = plot_kline_volume_signal_adept(stockindex.origin_data, indicator )
@@ -269,14 +276,12 @@ if st.session_state['plot']:
         # result.index.name = 'index'
         # st.line_chart(result)
         result = result.render_embed()
-        with pic_col[0]:
-            st.write('##### plotting')
+        # with pic_col[0]:
+        st.write('##### plotting')
 
-            components.html(result,width=1800, height=3000)
+        components.html(result,width=1800, height=3000)
 
-        with pic_col[1]:
-            start = st.date_input('start', datetime.date(2021,1,1))
-            end = st.date_input('end', datetime.date(2021,12,31))
+        # with pic_col[1]:
 
 
 

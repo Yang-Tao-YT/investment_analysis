@@ -62,7 +62,7 @@ data = pd.concat([data, hs300])
 data = data.set_index('代码')
 data = data.apply(pd.to_numeric,args=['ignore'])
 # 选择标的
-symbol_chs = st.selectbox('code',['中证500' , '沪深300', '上证50', '创业板指', '科创50'], index = 1)
+symbol_chs = st.selectbox('code',['中证500' , '沪深300', '上证50', '创业板指', '科创50', '（深）沪深300'], index = 1)
 symbol = name_2_symbol[symbol_chs]
 
 # 读取标的行情
@@ -80,6 +80,8 @@ elif symbol_chs == '创业板指':
     data = data.loc[data.名称.str.startswith('创业板')]
 elif symbol_chs == '科创50':
     data = data.loc[data.名称.str.startswith('科创50')]
+elif symbol_chs == '（深）沪深300':
+    data = data.loc[data.名称.str.startswith('沪深300ETF')]
 
 #添加risk指标
 data = data.join(greek.set_index('期权代码')[['实际杠杆比率' ,  'Delta' ,  'Gamma'  ,  'Vega'  ,   'Rho',   'Theta']])

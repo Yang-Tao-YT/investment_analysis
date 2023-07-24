@@ -395,7 +395,7 @@ class AkShare:
         index_investing_global_df = ak.index_investing_global(area="美国", symbol="标普500指数", period="每日", start_date="20100101", end_date="20220808")
         print(index_investing_global_df)
 
-    def obtain_index_global(self):
+    def obtain_index(self):
         stock_zh_index_daily_df = ak.stock_zh_index_daily(symbol="sh000300")
         print(stock_zh_index_daily_df)
 
