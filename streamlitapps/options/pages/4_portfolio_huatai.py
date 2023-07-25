@@ -43,48 +43,35 @@ def return_stockindex(symbol, setting : dict = None):
 
 @st.cache_data
 def load_position(axis = 1):
-    dataframe = pd.read_csv('position.csv', encoding = 'utf-8-sig', index_col=0)
-    dataframe = dataframe.replace({'义务' : -1, '权利' : 1})
-    dataframe = dataframe.set_index('合约代码')
-    dataframe1 = dataframe.loc[~dataframe.index.isna()].copy()
+    dataframe = pd.read_csv('huataiposition.csv', index_col=0)
+    dataframe = dataframe.dropna(axis=1)
+    def trans(x:str):
+        if isinstance(x, str):
+            x = x.strip('=')
+            x = x.strip('"')
+        return x
+    dataframe = dataframe.applymap(trans)
+    dataframe = dataframe.replace({'义务' : -1, '权利' : 1, })
+    dataframe = dataframe.rename(columns={'定价' : '定价价栳n','开仓均价' :'成本价',
+                                   '净仓' : '实际持仓'})
+    dataframe = dataframe.astype({'成本价' : float, '实际持仓' : int,})
 
-    if os.path.exists('huataiposition.csv'):
-        dataframe = pd.read_csv('huataiposition.csv', index_col=0)
-        dataframe = dataframe.dropna(axis=1)
-        def trans(x:str):
-            if isinstance(x, str):
-                x = x.strip('=')
-                x = x.strip('"')
-            return x
-        dataframe = dataframe.applymap(trans)
-        dataframe = dataframe.replace({'义务' : -1, '权利' : 1, })
-        dataframe = dataframe.rename(columns={'定价' : '定价价栳n','开仓均价' :'成本价',
-                                    '净仓' : '实际持仓'})
-        dataframe = dataframe.astype({'成本价' : float, '实际持仓' : int,})
+    dataframe['持仓类型'] = 1 ; dataframe.loc[dataframe['实际持仓'] < 0 , '持仓类型'] = -1
+    dataframe['实际持仓'] = abs(dataframe['实际持仓'])
 
-        dataframe['持仓类型'] = 1 ; dataframe.loc[dataframe['实际持仓'] < 0 , '持仓类型'] = -1
-        dataframe['实际持仓'] = abs(dataframe['实际持仓'])
+    dataframe = dataframe.set_index('合约编码')
+    dataframe = dataframe.loc[~dataframe.index.isna()]
+    return dataframe
 
-        dataframe = dataframe.set_index('合约编码')
-        dataframe = dataframe.loc[~dataframe.index.isna()]
+dataframe = st.file_uploader('持仓文件',  type="csv")
 
-        dataframe1 = pd.concat([dataframe1, dataframe], axis = 0).sort_index()
-    return dataframe1
+if  st.button('上传'):
+    if dataframe is not None :
+        dataframe = pd.read_csv(dataframe, dtype=object)
+        st.dataframe(dataframe)
+        dataframe.to_csv('huataiposition.csv', index = False)
 
-dataframe = st.file_uploader('持仓文件',  type="xls")
-
-if dataframe is not None:
-    import xlrd
-    dataframe = dataframe.getvalue()
-    with open('position.txt', 'wb') as f:
-        f.write(dataframe)
-    # st.write(dataframe)
-    dataframe = xlrd.open_workbook('position.txt', encoding_override='gbk')
-    dataframe = pd.read_excel(dataframe, engine='xlrd')
-    st.dataframe(dataframe)
-    dataframe.to_csv('position.csv', encoding = 'utf-8-sig', index = False)
-
-if os.path.exists('position.csv'):
+if os.path.exists('huataiposition.csv'):
     dataframe = load_position(1)
     # price
     data = loader.current_em()
@@ -114,16 +101,16 @@ if os.path.exists('position.csv'):
     # get price of underlying asset
     hs300_price = return_stockindex('sh510300', None).origin_data.iloc[-1,:]['close']
     zz500_price = return_stockindex('sh510500', None).origin_data.iloc[-1,:]['close']
-    shs300_price = return_stockindex('sz159919', None).origin_data.iloc[-1,:]['close']
+
     # calculate scale
     test = trad.position.iloc[:-1].copy()
-    test.loc[test.合约名称.str.contains('300ETF'), '行权价'] = test.loc[test.合约名称.str.contains('300ETF') , '行权价'] / hs300_price - 1
-    test.loc[test.合约名称.str.contains('159919') , '行权价'] = test.loc[ test.合约名称.str.contains('159919') , '行权价'] / shs300_price - 1
-    
-    test.loc[test.合约名称.str.contains('500ETF')| test.合约名称.str.contains('510500') , '行权价'] = test.loc[test.合约名称.str.contains('500ETF')| test.合约名称.str.contains('510500') , '行权价'] / zz500_price - 1
+    test.loc[test.合约名称.str.contains('300ETF'), '行权价'] = test.loc[test.合约名称.str.contains('300ETF'), '行权价'] / hs300_price - 1
+    test.loc[test.合约名称.str.contains('500ETF'), '行权价'] = test.loc[test.合约名称.str.contains('500ETF'), '行权价'] / zz500_price - 1
     trad.position.insert(4, '比例', list((test['行权价'] * 100).values) + [None]) 
 
-    st.dataframe(trad.position.drop(['行权价值' ,'行权盈亏', '备兑数量','可用'], axis = 1),
+    if '行权盈亏' in trad.position.columns:
+        trad = trad.position.drop(['行权价值' ,'行权盈亏', '备兑数量','可用'], axis = 1)
+    st.dataframe(trad.position,
                  column_config={
         "比例": st.column_config.NumberColumn(
             "行权涨跌幅%",
@@ -141,9 +128,9 @@ if os.path.exists('position.csv'):
             # step=1,
             format="%.2f %%",
         )
-    } , height=trad.position.shape[0] * 40)
+    } , height=trad.position.shape[0] * 50)
     st.info(f"浮动盈亏 {profit}")
-    st.info(f"potential earning : {round (trad.position.loc['统计', ['合约市值','浮动盈亏']].sum(), 2)}")
+    st.info(f"potential earning : {trad.position.loc['统计', ['合约市值','浮动盈亏']].sum().round(2)}")
     st.info(f"earned pctg : {round(profit / trad.position.loc['统计', ['合约市值','浮动盈亏']].sum() * 100,3)} %")
 
 
