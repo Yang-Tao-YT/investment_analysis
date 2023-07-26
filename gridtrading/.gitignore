@@ -1,0 +1,6 @@
+.idea
+Pricing/data/
+*.xlsx
+*.csv
+*.pyc
+*.png

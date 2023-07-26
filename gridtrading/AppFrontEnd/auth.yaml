@@ -1,0 +1,18 @@
+credentials:
+  usernames:
+    liubo:
+      email: liubo@sxzq.com
+      name: Liu Bo
+      password: $2b$12$n2ZgjCeXjdHdGgh/oGlSmeEnjtOvbO5n6SFdLjJA5UIuepbx8D0..
+    chenxiang:
+      email: chenxiang@sxzq.com
+      name: Chen Xiang
+      password: $2b$12$xFr7ICKyMZAaWbZvGGVTR..YSZOm4URifF1FIu2ViWEBM64MbWDaS
+    zhalun:
+      email: zhalun@sxzq.com
+      name: Zha Lun
+      password: $2b$12$wxgxfkrUASG7cKANMsGrJ.n4arTyaJeUi95FfNaXsTTuI1NGXsGOy
+cookie:
+  expiry_days: 5
+  key: random_signature_key # Must be string
+  name: random_cookie_name

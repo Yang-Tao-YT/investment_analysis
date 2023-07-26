@@ -1,0 +1,7 @@
+stock_close_price_path = "/usr/local/public/nfsroot/database/CLOSE_PRICE_adj.csv"
+etf_close_price_path = "/usr/local/public/nfsroot/database/etf_CLOSE_PRICE.csv"
+stock_name_path = "/usr/local/public/nfsroot/database/股票池20230605.xlsx"
+stock_industry_path = "/usr/local/public/nfsroot/database/industry.xlsx"
+real_time_path = "/usr/local/public/nfsroot/database/real_time"
+grid_trading_doc_path = "/usr/local/public/code/grid/grid_trading_docs"
+delta_path = "/usr/local/public/code/grid/grid_trading_docs/trading_docs/Delta"
