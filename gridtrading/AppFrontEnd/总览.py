@@ -2,24 +2,24 @@ import streamlit as st
 import os
 import pandas as pd
 import plotly.graph_objs as go
-from utils import format_money, contract_pnl_volume, stock_last_price, highlight_rows
-import config
+from gridtrading.AppFrontEnd.utils import format_money, contract_pnl_volume, stock_last_price, highlight_rows
+from . import config
 import streamlit_authenticator as stauth
 import yaml
 from yaml.loader import SafeLoader
 
 st.set_page_config(page_title="总览", layout="wide")
 
-with open('AppFrontEnd/auth.yaml') as file:
-    auth = yaml.load(file, Loader=SafeLoader)
-authenticator = stauth.Authenticate(
-    auth['credentials'],
-    auth['cookie']['name'],
-    auth['cookie']['key'],
-    auth['cookie']['expiry_days']
-)
-_, authentication_status, _ = authenticator.login('Login', 'main')
-st.session_state.authentication_status = authentication_status
+# with open('AppFrontEnd/auth.yaml') as file:
+#     auth = yaml.load(file, Loader=SafeLoader)
+# authenticator = stauth.Authenticate(
+#     auth['credentials'],
+#     auth['cookie']['name'],
+#     auth['cookie']['key'],
+#     auth['cookie']['expiry_days']
+# )
+# _, authentication_status, _ = authenticator.login('Login', 'main')
+st.session_state['authentication_status'] = 1
 
 if st.session_state.authentication_status:
     st.markdown("## 总览")

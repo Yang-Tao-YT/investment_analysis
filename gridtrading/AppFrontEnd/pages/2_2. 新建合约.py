@@ -3,8 +3,11 @@ import datetime
 import os
 import config
 import pandas as pd
-from utils import cal_coupon, cal_delta, read_etf_price, read_stock_price, format_money, stock_last_price, get_stock_name, get_industry_name
+from gridtrading.AppFrontEnd.utils import cal_coupon, cal_delta, read_etf_price, read_stock_price, format_money, stock_last_price, get_stock_name, get_industry_name
 
+debug = 1
+if debug:
+    st.session_state = {}
 if "authentication_status" in st.session_state and st.session_state.authentication_status:  
     
     st_dict = st.session_state.to_dict()
@@ -55,13 +58,13 @@ if "authentication_status" in st.session_state and st.session_state.authenticati
             ticker = st.text_input("请输入股票代码：", value=st.session_state.ticker, on_change=set_target_callback, key="ticker")
         else:
             ticker = st.text_input("请输入股票代码：", placeholder="000001", on_change=set_target_callback, key="ticker")
-        ticker_list = read_stock_price().columns
+        # ticker_list = read_stock_price().columns
     else:
         if "ticker" in st.session_state and st.session_state.ticker:
             ticker = st.text_input("请输入ETF代码：", value=st.session_state.ticker, on_change=set_target_callback, key="ticker")
         else:
             ticker = st.text_input("请输入ETF代码：", placeholder="501500", on_change=set_target_callback, key="ticker")    
-        ticker_list = read_etf_price().columns
+        # ticker_list = read_etf_price().columns
         
     if not ticker:
         st.info("请输入标的代码！")

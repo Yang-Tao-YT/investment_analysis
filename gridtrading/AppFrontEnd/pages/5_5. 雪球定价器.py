@@ -1,5 +1,5 @@
 import streamlit as st
-from Pricing.quantlib_pricing import snowball_pricing_mcm_mp, calculate_coupon_snowball
+from gridtrading.Pricing.quantlib_pricing import snowball_pricing_mcm_mp, calculate_coupon_snowball
 import datetime
 import time
 import pandas as pd

@@ -7,7 +7,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import QuantLib as ql
-from Pricing.quantlib_pricing import last_trade_date_month
+from ..Pricing.quantlib_pricing import last_trade_date_month
 
 
 def snowball_valuation(sample_path: pd.Series | np.ndarray,

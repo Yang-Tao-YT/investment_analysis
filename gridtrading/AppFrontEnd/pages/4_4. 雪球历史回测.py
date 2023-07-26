@@ -3,7 +3,7 @@ import pandas as pd
 import datetime
 import plotly.express as px
 import plotly.graph_objects as go
-from utils import snowball_backtest, read_stock_price, read_etf_price, snowball_hedger, format_money
+from gridtrading.AppFrontEnd.utils import snowball_backtest, read_stock_price, read_etf_price, snowball_hedger, format_money
 
 if "authentication_status" in st.session_state and st.session_state.authentication_status:
     st.set_page_config(page_title="雪球历史回测", page_icon="❄️", layout="wide")

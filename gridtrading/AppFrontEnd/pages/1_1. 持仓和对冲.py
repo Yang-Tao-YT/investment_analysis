@@ -6,9 +6,9 @@ import datetime
 import os
 import shutil
 import config as config
-from utils import *
+from gridtrading.AppFrontEnd.utils import *
 import plotly.graph_objects as go
-from Pricing.predict_volatility import vol_predict_garch
+from gridtrading.Pricing.predict_volatility import vol_predict_garch
 
 if "authentication_status" in st.session_state and st.session_state.authentication_status:    
     st.set_page_config(page_title="持仓和对冲", page_icon="💰", layout="wide")

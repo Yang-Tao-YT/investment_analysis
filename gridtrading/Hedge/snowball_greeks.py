@@ -7,7 +7,7 @@ from __future__ import annotations
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from Pricing.quantlib_pricing import snowball_pricing_mcm_mp
+from ..Pricing.quantlib_pricing import snowball_pricing_mcm_mp
 
 
 def calculate_snowball_delta_gamma(current_price: float,

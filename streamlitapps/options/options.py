@@ -8,7 +8,7 @@ import re
 import sys
 import pathlib
 print(sys.path)
-sys.path.append(str(pathlib.Path().absolute()).split("/src")[0] )
+# sys.path.append(str(pathlib.Path().absolute()).split("/src")[0] )
 st.title('strategy')
 
 

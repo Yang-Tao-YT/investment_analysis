@@ -7,7 +7,12 @@ import re
 # import time
 import sys
 import os
+
+print(sys.path)
+
 from data.generate_data import AkShare
+
+
 st.set_page_config(
 page_title="investing analysis",  #页面标题
 # page_icon=":rainbow:",  #icon

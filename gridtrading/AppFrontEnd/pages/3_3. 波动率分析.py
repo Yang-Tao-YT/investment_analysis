@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from Pricing.volatility_cone_surface import *
 from Pricing.predict_volatility import *
-from utils import last_n_business_days, read_etf_price, read_stock_price
+from gridtrading.AppFrontEnd.utils import last_n_business_days, read_etf_price, read_stock_price
 
 if "authentication_status" in st.session_state and st.session_state.authentication_status:
     today = datetime.datetime.today()

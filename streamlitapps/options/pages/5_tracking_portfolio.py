@@ -83,7 +83,8 @@ if dataframe is not None:
     dataframe = pd.read_excel(dataframe, engine='xlrd')
     st.dataframe(dataframe)
     dataframe.to_csv('position.csv', encoding = 'utf-8-sig', index = False)
-
+    os.remove('position.txt')
+    
 if os.path.exists('position.csv'):
     dataframe = load_position(1)
     # price
