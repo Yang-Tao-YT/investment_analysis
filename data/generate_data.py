@@ -388,9 +388,11 @@ class AkShare:
         return data
 
     def current_k_data_all_dongcai(self):
-        self.ak.stock_zh_a_spot_em()
-        return 
+        return self.ak.stock_zh_a_spot_em()
 
+    def current_k_etf_dongcai(self):
+        return self.ak.fund_etf_spot_em()
+    
     def obtain_index_global(self):
         index_investing_global_df = ak.index_investing_global(area="美国", symbol="标普500指数", period="每日", start_date="20100101", end_date="20220808")
         print(index_investing_global_df)

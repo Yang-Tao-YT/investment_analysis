@@ -233,40 +233,47 @@ class Trading:
         
     #     return value
     def update_position(self):
-        index = self.bar.df.index[self.bar.df.index.isin( self.position.index)]
-        self.position.loc[index, '最新价'] =  self.bar.df.loc[index, '最新价']
-        self.position.loc[index, '行权价'] =  self.bar.df.loc[index, '行权价']
+        index = self.position.index
+        columns = self.position.columns
+        temp_df = self.position.copy()
+        temp_df = temp_df.drop('最新价', axis = 1, ).join(self.bar.df).copy()
         # 计算市值
-        self.position.loc[index, '合约市值'] =  self.position.loc[index, '最新价'] * self.position.loc[index,'实际持仓']*10000
+        temp_df['合约市值'] =  temp_df[ '最新价'] * temp_df['实际持仓']*10000
 
         #计算盈亏
-        self.position.loc[index, '浮动盈亏'] =  ((self.position.loc[index, '最新价']* self.position.loc[index, '持仓类型']  -
-                                             self.position.loc[index, '成本价'] * self.position.loc[index, '持仓类型'])
-                                                        * self.position.loc[index,'实际持仓']*10000)
-        # self.position.loc['统计', ['浮动盈亏', '合约市值']] =  self.position.loc[index, ['浮动盈亏', '合约市值']].sum(axis = 0)
+        temp_df[ '浮动盈亏'] =  ((temp_df['最新价']* temp_df[ '持仓类型']  -
+                                             temp_df[ '成本价'] * temp_df[ '持仓类型'])
+                                                        * temp_df['实际持仓']*10000)
+        # temp_df.loc['统计', ['浮动盈亏', '合约市值']] =  temp_df[ ['浮动盈亏', '合约市值']].sum(axis = 0)
         #计算geek
-        newgeek = (        
-            self.greek.loc[index, ['Delta', 'Gamma', 'Vega', 'Rho', 'Theta']].mul(
-                            self.position.loc[index, ['实际持仓'] ].squeeze() * self.position.loc[index, ['持仓类型'] ].squeeze()
+        temp_df = temp_df.join(self.greek, lsuffix='old').copy()
+        temp_df[ ['Delta', 'Gamma', 'Vega', 'Rho', 'Theta']] =     (temp_df[ ['Delta', 'Gamma', 'Vega', 'Rho', 'Theta']].mul(
+                            temp_df['实际持仓'].squeeze() * self.position['持仓类型' ].squeeze()
                      * 10000 , axis = 0)  )
-        newgeek['Theta']  = (newgeek['Theta']  / 365)
-        self.position.loc[index, ['Delta', 'Gamma', 'Vega', 'Rho', 'Theta']] = newgeek
+        
+        # newgeek =  (self.position.loc[index, ['实际持仓'] ].squeeze() * self.position.loc[index, ['持仓类型'] ].squeeze()
+        #              * 10000).mul( self.greek.loc[index, ['Delta', 'Gamma', 'Vega', 'Rho', 'Theta']]
+        #                    , axis = 0)  
+        # newgeek['Theta']  = (newgeek['Theta']  / 365)
+        # self.position.loc[index, ['Delta', 'Gamma', 'Vega', 'Rho', 'Theta']] = newgeek.loc[index, ['Delta', 'Gamma', 'Vega', 'Rho', 'Theta']]
 
         #计算涨跌额
         
-        percent = (self.bar.df.loc[index , '涨跌额']* self.position.loc[index , '实际持仓'] * 
-                                        10000 *  self.position.loc[index, '持仓类型']).to_frame('涨跌额') ; percent.index.name = '代码'
+        temp_df[ '涨跌额'] = (temp_df[ '涨跌额']* temp_df[ '实际持仓'] * 
+                                        10000 *  temp_df[ '持仓类型']).to_frame('涨跌额') 
         
         # self.position.insert(9,'涨跌额', list(percent.values) + [None])
-        self.position.loc[index, '涨跌额'] = percent.squeeze()
-        self.position = self.position.iloc[: , list(range(8)) + [len(self.position.columns) - 1] + list(range(8, len(self.position.columns)-1))]
-        self.position.insert(2,'涨跌幅',self.bar.df.loc[index , '涨跌幅'])
+        # self.position.loc[self.position.index, '涨跌额'] = percent.loc[self.position.index.drop('统计'), '涨跌额']
+        # temp_df = temp_df.iloc[: , list(range(8)) + [len(temp_df.columns) - 1] + list(range(8, len(temp_df.columns)-1))]
 
-        self.position.loc['统计',['浮动盈亏', '合约市值', '涨跌额','Delta', 'Gamma', 'Vega', 'Rho', 'Theta'] ] = (
-            self.position.loc[index, ['浮动盈亏', '合约市值', '涨跌额', 'Delta', 'Gamma', 'Vega', 'Rho', 'Theta'] ].sum(axis = 0))
-        self.position.loc[index, 'single delta'] = self.greek.loc[index, 'Delta']
+
+        temp_df.loc['统计',['浮动盈亏', '合约市值', '涨跌额','Delta', 'Gamma', 'Vega', 'Rho', 'Theta'] ] = (
+            temp_df.drop('统计')[ ['浮动盈亏', '合约市值', '涨跌额', 'Delta', 'Gamma', 'Vega', 'Rho', 'Theta'] ].sum(axis = 0))
+        temp_df = temp_df.join(self.greek[ 'Delta'].to_frame('single delta'))
         # self.position.loc[index , '涨跌额'] = self.bar.df.loc[index , '涨跌额']* self.position.loc[index , '实际持仓'] * 10000 *  self.position.loc[index, '持仓类型']
-    
+        self.position = temp_df[['合约名称', '合约类型', '持仓类型', '实际持仓', '涨跌额', "涨跌幅", '成本价', '最新价', '合约市值', '行权价值',
+       '浮动盈亏', '行权价' ,'Delta', 'Gamma', 'Vega', 'Theta', 'Rho']]
+        
     def profit(self):
         
         cost = self.cost()

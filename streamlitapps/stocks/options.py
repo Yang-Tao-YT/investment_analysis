@@ -7,6 +7,13 @@ import re
 # import time
 import sys
 import os
+from data.generate_data import AkShare
+st.set_page_config(
+page_title="investing analysis",  #页面标题
+# page_icon=":rainbow:",  #icon
+layout="wide", #页面布局
+initial_sidebar_state="auto" #侧边栏
+)
 
 st.title('记录持仓')
 sys.path.append(str(pathlib.Path().absolute()).split("/src")[0] )
@@ -48,27 +55,34 @@ sys.path.append(str(pathlib.Path().absolute()).split("/src")[0] )
 #     df.to_csv('stock_position.csv')
 #     st.experimental_rerun()
 
-df = pd.read_csv('stock_position.csv', index_col=0)
+df = pd.read_csv('stock_position.csv', index_col=0, dtype=object)
 # df['名称'] = df['名称'].astype(str)
 df.index = df.index.astype(str)
 df['平均成本'] = df['平均成本'].astype(float)
-df['持仓数量'] = df['持仓数量'].astype(int)
+df['持仓数量'] = df['持仓数量'].astype(float)
 df['持仓成本'] = df['持仓数量'] * df['平均成本']
 
+df_k = AkShare().current_k_etf_dongcai()
+df_k = df_k.set_index('代码')
+df_k.index = df_k.index.astype(str)
+df = df.reset_index().set_index('代码').join(df_k.drop('名称', axis=1), lsuffix='old')
+df['市值'] = df['持仓数量'] * df['最新价']
+df['持仓收益']  = df['市值'] - df['持仓成本']
+df = df.reset_index().set_index('名称')
+df.loc['统计', ['持仓成本' , '持仓收益']] = df[ ['持仓成本' , '持仓收益']].sum()
+
+df = df[[ '代码','持仓数量'  , '平均成本', '最新价', '持仓成本' , '市值','持仓收益']]
 # df['持仓成本'] = df['持仓成本'].astype(float)
 edited_df = st.data_editor(df, 
                     num_rows='dynamic',
-                #     column_config={
-                #     "平均成本": st.column_config.NumberColumn(
-                #         "平均成本",
-                #         help="平均成本",
-                #         min_value=0.0,
-                #         max_value=1000.0,
-                #         step=0.1,
-                #         # format="$%d",
-                #     )
-                # },
+                    column_config={
+                    "持仓收益": st.column_config.NumberColumn(
+                        disabled = True
+                        # format="$%d",
+                    )
+                },
                 # hide_index=True
+                width=3000
                 )
 # st.write(edited_df)
 if st.button("计算", ):
