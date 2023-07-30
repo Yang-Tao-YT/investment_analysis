@@ -37,6 +37,25 @@ class Spred(Strategy):
         return Pt_index,call_long,call_short,bull_spread  #期权到期日牛市价差盈亏 
 
     @staticmethod
+    def bearspread_call(K1,K2,C1,C2,P0,P0_index,Pt_index,N1,N2,N_underlying):
+        '''
+        K1:较低期权的执行价格；
+        K2:较高期权的执行价格；
+        C1:较低执行价格期权的当前价格；
+        C2:较高执行价格期权的当前价格；
+        P0:标的资产当前单位净值价格；
+        P0_index：标的资产当前收盘点位；
+        Pt_index：期权到期日标的资产收盘点位；
+        N1:较低执行价格的期权多头头寸数量；
+        N2:较高执行价格的期权多头头寸数量；
+        N_underlying：1张标的资产期权基础资产是多少份单位净值.'''    
+        Pt=P0*Pt_index/P0_index  #期权到期日标的资产基金净值数组
+        call_long=N1*N_underlying*(np.maximum(Pt-K1,0)-C1) #期权到期日较低执行价格期权多头头寸的盈亏
+        call_short=N2*N_underlying*(C2-np.maximum(Pt-K2,0)) #期权到期日较高执行价格期权空头头寸的盈亏
+        bull_spread=call_long+call_short
+        return Pt_index,call_long,call_short,bull_spread  #期权到期日牛市价差盈亏 
+    
+    @staticmethod
     def bullspread_put(K1,K2,P1,P2,P0,P0_index,Pt_index,N1,N2,N_underlying):
         '''K1:较低期权的执行价格；
         K2:较高期权的执行价格；
