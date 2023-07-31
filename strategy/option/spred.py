@@ -50,10 +50,29 @@ class Spred(Strategy):
         N2:较高执行价格的期权多头头寸数量；
         N_underlying：1张标的资产期权基础资产是多少份单位净值.'''    
         Pt=P0*Pt_index/P0_index  #期权到期日标的资产基金净值数组
-        call_long=N1*N_underlying*(np.maximum(Pt-K1,0)-C1) #期权到期日较低执行价格期权多头头寸的盈亏
-        call_short=N2*N_underlying*(C2-np.maximum(Pt-K2,0)) #期权到期日较高执行价格期权空头头寸的盈亏
+        call_long=-1 * N1*N_underlying*(np.maximum(Pt-K1,0)-C1) #期权到期日较低执行价格期权多头头寸的盈亏
+        call_short=-1 * N2*N_underlying*(C2-np.maximum(Pt-K2,0)) #期权到期日较高执行价格期权空头头寸的盈亏
         bull_spread=call_long+call_short
         return Pt_index,call_long,call_short,bull_spread  #期权到期日牛市价差盈亏 
+
+    @staticmethod
+    def bearspread_put(K1,K2,P1,P2,P0,P0_index,Pt_index,N1,N2,N_underlying):
+        '''K1:较低期权的执行价格；
+        K2:较高期权的执行价格；
+        P1:较低执行价格期权的当前价格；
+        P2:较高执行价格期权的当前价格；
+        P0:标的资产当前单位净值价格；
+        P0_index：标的资产当前收盘点位；
+        Pt_index：期权到期日标的资产收盘点位；
+        N1:较低执行价格的期权多头头寸数量；
+        N2:较高执行价格的期权多头头寸数量；
+        N_underlying：1张标的资产期权基础资产是多少份单位净值.'''    
+        Pt=P0*Pt_index/P0_index  #期权到期日标的资产基金净值数组
+        put_long=-1 * N1*N_underlying*(np.maximum(K1-Pt,0)-P1) #期权到期日较低执行价格期权多头头寸的盈亏
+        put_short=-1 * N2*N_underlying*(P2-np.maximum(K2-Pt,0)) #期权到期日较高执行价格期权空头头寸的盈亏
+        bull_spread=put_long+put_short
+        return Pt_index,put_long,put_short,bull_spread  #期权到期日牛市价差盈亏
+
     
     @staticmethod
     def bullspread_put(K1,K2,P1,P2,P0,P0_index,Pt_index,N1,N2,N_underlying):
@@ -74,15 +93,19 @@ class Spred(Strategy):
         return Pt_index,put_long,put_short,bull_spread  #期权到期日牛市价差盈亏
 
     @staticmethod
-    def equant_point_call(K1,C1,C2): 
+    def bull_equant_point_call(K1,C1,C2): 
         return 0 - C2 + (C1 + K1)
 
     @staticmethod
-    def equant_point_put(K2,P1,P2): 
+    def bull_equant_point_put(K2,P1,P2): 
         return 0 + P1 - P2 + K2
-    
+
     @staticmethod
-    def margin(K1,K2,C1,C2,):
+    def bull_equant_point_call(K1,C1,C2): 
+        return 0 - C2 + (C1 + K1)
+     
+    @staticmethod
+    def margin_call(K1,K2,C1,C2,):
         '''
         付出权利金时没有保证金，
         得到权利金时付出行权价差的保证金'''
@@ -90,7 +113,17 @@ class Spred(Strategy):
             return K2 - K1
         else:
             return C1 - C2
-             
+
+    @staticmethod
+    def margin_bear(K1,K2,C1,C2,):
+        '''
+        付出权利金时没有保证金，
+        得到权利金时付出行权价差的保证金'''
+        if C1>C2:
+            return K2 - K1
+        else:
+            return C1 - C2
+               
     def chose_contract(self, contracts, spred_type, current_price = None, std =  0.02,  round_type = 'down', ):
         """
         The function `chose_contract` takes in a list of contracts, a spread type, current price, standard

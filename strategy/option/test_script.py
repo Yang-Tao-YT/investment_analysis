@@ -15,7 +15,7 @@ data = pd.concat([data, hs300])
 data = data.set_index('代码')
 data = data.apply(pd.to_numeric,args=['ignore'])
 data = data.loc[data.名称.str.startswith('300')]
-data = data.loc[data['剩余日'] ==  40]
+data = data.loc[data['剩余日'] ==  23]
 
 spred = Spred()
 
@@ -33,8 +33,26 @@ returns = spred.bullspread_call(
     N2=1,
     N_underlying=1
 )[-1]
+margin = spred.margin_call(    
+    K1 = down['执行价'].squeeze(),
+    K2 = up['执行价'].squeeze(),
+    C1 = down['最新价'].squeeze(),
+    C2 = up['最新价'].squeeze(),)
 
-margin = spred.margin(    
+returns = spred.bearspread_call(
+    K1 = down['执行价'].squeeze(),
+    K2 = up['执行价'].squeeze(),
+    C1 = down['最新价'].squeeze(),
+    C2 = up['最新价'].squeeze(),
+    P0 = 4.084,
+    P0_index=4.084,
+    Pt_index=2,
+    N1=1,
+    N2=1,
+    N_underlying=1
+)[-1]
+
+margin = spred.margin_bear(    
     K1 = down['执行价'].squeeze(),
     K2 = up['执行价'].squeeze(),
     C1 = down['最新价'].squeeze(),
@@ -59,7 +77,7 @@ returns = spred.bullspread_put(
 )[-1]
 
 
-margin = spred.margin(    
+margin = spred.margin_call(    
     K1 = down['执行价'].squeeze(),
     K2 = up['执行价'].squeeze(),
     C1 = down['最新价'].squeeze(),

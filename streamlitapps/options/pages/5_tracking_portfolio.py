@@ -43,11 +43,12 @@ def return_stockindex(symbol, setting : dict = None):
 
 @st.cache_data
 def load_position(axis = 1):
-    dataframe = pd.read_csv('position.csv', encoding = 'utf-8-sig', index_col=0)
-    dataframe = dataframe.replace({'义务' : -1, '权利' : 1})
-    dataframe = dataframe.set_index('合约代码')
-    dataframe1 = dataframe.loc[~dataframe.index.isna()].copy()
+    # dataframe = pd.read_csv('position.csv', encoding = 'utf-8-sig', index_col=0)
+    # dataframe = dataframe.replace({'义务' : -1, '权利' : 1})
+    # dataframe = dataframe.set_index('合约代码')
+    # dataframe1 = dataframe.loc[~dataframe.index.isna()].copy()
 
+    dataframe1 = pd.DataFrame()
     if os.path.exists('huataiposition.csv'):
         dataframe = pd.read_csv('huataiposition.csv', index_col=0)
         dataframe = dataframe.dropna(axis=1)
@@ -85,7 +86,7 @@ if dataframe is not None:
     dataframe.to_csv('position.csv', encoding = 'utf-8-sig', index = False)
     os.remove('position.txt')
     
-if os.path.exists('position.csv'):
+if os.path.exists('position.csv') or os.path.exists('huataiposition.csv'):
     dataframe = load_position(1)
     # price
     data = loader.current_em()
@@ -118,7 +119,7 @@ if os.path.exists('position.csv'):
     shs300_price = return_stockindex('sz159919', None).origin_data.iloc[-1,:]['close']
     # calculate scale
     test = trad.position.iloc[:-1].copy()
-    test.loc[test.合约名称.str.contains('300ETF'), '行权价'] = test.loc[test.合约名称.str.contains('300ETF') , '行权价'] / hs300_price - 1
+    test.loc[test.合约名称.str.contains('510300'), '行权价'] = test.loc[test.合约名称.str.contains('510300') , '行权价'] / hs300_price - 1
     test.loc[test.合约名称.str.contains('159919') , '行权价'] = test.loc[ test.合约名称.str.contains('159919') , '行权价'] / shs300_price - 1
     
     test.loc[test.合约名称.str.contains('500ETF')| test.合约名称.str.contains('510500') , '行权价'] = test.loc[test.合约名称.str.contains('500ETF')| test.合约名称.str.contains('510500') , '行权价'] / zz500_price - 1

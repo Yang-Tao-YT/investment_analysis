@@ -6,7 +6,7 @@ from strategy.option.宽跨 import StrangleOption
 
 import pandas as pd
 import streamlit as st
-from streamlitapps.options.strategy_ import strangle, multichoice_strangle, _spred
+from streamlitapps.options.strategy_ import strangle, multichoice_strangle, bull_spred
 from utils.basic import name_2_symbol, rename_dataframe, Bar
 from stock_strategy import StockIndex, stock_etf_hist_dataloader
 
@@ -112,7 +112,7 @@ if tabs ==  '宽跨定制':
 
 if tabs ==  '看涨价差':
     #读取剩余日
-    _spred(price, data, contracts_amount, fees)
+    bull_spred(price, data, contracts_amount, fees)
 
 if tabs ==  '多个功能':
     mulfun = st.columns(2)
@@ -127,7 +127,7 @@ if tabs ==  '多个功能':
 
         if mulfun_tabs1 ==  '看涨价差':
             #读取剩余日
-            _spred(price, data, contracts_amount, fees)
+            bull_spred(price, data, contracts_amount, fees)
 
     with mulfun[1]:
         mulfun_tabs1 = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差'], key='mulfun1', index = 2)
@@ -140,5 +140,5 @@ if tabs ==  '多个功能':
 
         if mulfun_tabs1 ==  '看涨价差':
             #读取剩余日
-            _spred(price, data, contracts_amount, fees)
+            bull_spred(price, data, contracts_amount, fees)
 
