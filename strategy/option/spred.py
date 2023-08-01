@@ -93,16 +93,12 @@ class Spred(Strategy):
         return Pt_index,put_long,put_short,bull_spread  #期权到期日牛市价差盈亏
 
     @staticmethod
-    def bull_equant_point_call(K1,C1,C2): 
+    def equant_point_call(K1,C1,C2): 
         return 0 - C2 + (C1 + K1)
 
     @staticmethod
-    def bull_equant_point_put(K2,P1,P2): 
+    def equant_point_put(K2,P1,P2): 
         return 0 + P1 - P2 + K2
-
-    @staticmethod
-    def bull_equant_point_call(K1,C1,C2): 
-        return 0 - C2 + (C1 + K1)
      
     @staticmethod
     def margin_call(K1,K2,C1,C2,):
@@ -124,7 +120,7 @@ class Spred(Strategy):
         else:
             return C1 - C2
                
-    def chose_contract(self, contracts, spred_type, current_price = None, std =  0.02,  round_type = 'down', ):
+    def chose_contract(self, contracts, spred_type, current_price = None, std =  0.05,  round_type = 'down', type = 'bull'):
         """
         The function `chose_contract` takes in a list of contracts, a spread type, current price, standard
         deviation, and round type, and returns the contracts that meet the specified criteria.
@@ -154,18 +150,35 @@ class Spred(Strategy):
         if current_price is None:
             current_price = float(contracts.标的收盘价.iloc[0])
 
-        up = round(current_price, 2)
-        down = round(current_price * (1 - std), 2)
+        if type == 'bull':
+            up = round(current_price * (1 - std), 2)
+        elif type == 'bear':
+            #如果是熊市看跌，低档位为亏损价格
+            down = round(current_price * (1 + std), 2)
+
         contracts =  contracts.loc[(contracts.期权类型 == spred_type)]
 
         if round_type == 'down' :
-            up = contracts.loc[(contracts.执行价.astype(float) >= up)].sort_values('执行价')['合约编码'].iloc[0]
             
-            down = contracts.loc[(contracts.执行价.astype(float) <= down)].sort_values('执行价')['合约编码']
-            if down.shape[0] == 1:
-                down = down.iloc[0]
-            else:
-                down = down.iloc[1]
+            if type == 'bull':
+                down = contracts.loc[(contracts.执行价.astype(float) <= up)].sort_values('执行价')['执行价'].iloc[-2]
+
+                up = contracts.loc[(contracts.执行价.astype(float) <= up)].sort_values('执行价')['合约编码'].iloc[-1]            
+                down = contracts.loc[(contracts.执行价.astype(float) <= down)].sort_values('执行价')['合约编码']
+                if down.shape[0] == 1:
+                    down = down.iloc[0]
+                else:
+                    down = down.iloc[-1]
+
+            elif type == 'bear':
+                up = contracts.loc[(contracts.执行价.astype(float) >= down)].sort_values('执行价')['合约编码'].iloc[1] 
+                down = contracts.loc[(contracts.执行价.astype(float) >= down)].sort_values('执行价')['执行价'].iloc[0]
+           
+                down = contracts.loc[(contracts.执行价.astype(float) >= down)].sort_values('执行价')['合约编码']
+                if down.shape[0] == 1:
+                    down = down.iloc[0]
+                else:
+                    down = down.iloc[0]
 
         elif round_type == 'up':        
             up = contracts.loc[(contracts.执行价.astype(float) <= up)].sort_values('执行价')['合约编码'].iloc[-1]

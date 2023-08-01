@@ -6,7 +6,7 @@ from strategy.option.宽跨 import StrangleOption
 
 import pandas as pd
 import streamlit as st
-from streamlitapps.options.strategy_ import strangle, multichoice_strangle, bull_spred
+from streamlitapps.options.strategy_ import strangle, multichoice_strangle, bull_spred, bear_spred
 from utils.basic import name_2_symbol, rename_dataframe, Bar
 from stock_strategy import StockIndex, stock_etf_hist_dataloader
 
@@ -96,11 +96,11 @@ with set_cols[1]:
 with set_cols[2]:
     contracts_amount = st.number_input('手数', value = 0)
 with set_cols[3]:
-    fees = st.number_input('fees / 万', value = 3.0) / 10000
+    fees = st.number_input('fees / 万', value = 1.8) / 10000
 
 data = data.loc[data['剩余日'] ==  days].copy()
 
-tabs = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差', '看涨价差定制', '多个功能'])
+tabs = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差', '看跌价差', '多个功能'], index=3)
 
 st.write('-' * 20)
 if tabs ==  '宽跨':
@@ -114,10 +114,14 @@ if tabs ==  '看涨价差':
     #读取剩余日
     bull_spred(price, data, contracts_amount, fees)
 
+if tabs ==  '看跌价差':
+    #读取剩余日
+    bear_spred(price, data, contracts_amount, fees)
+
 if tabs ==  '多个功能':
     mulfun = st.columns(2)
     with mulfun[0]:
-        mulfun_tabs1 = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差'], key='mulfun0')
+        mulfun_tabs1 = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差', '看跌价差', ], key='mulfun0')
         if mulfun_tabs1 ==  '宽跨':
             strangle(data, bar, price, contracts_amount, account_amount, fees)
 
@@ -128,9 +132,14 @@ if tabs ==  '多个功能':
         if mulfun_tabs1 ==  '看涨价差':
             #读取剩余日
             bull_spred(price, data, contracts_amount, fees)
+
+        if mulfun_tabs1 ==  '看跌价差':
+            #读取剩余日
+            bear_spred(price, data, contracts_amount, fees)
+
 
     with mulfun[1]:
-        mulfun_tabs1 = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差'], key='mulfun1', index = 2)
+        mulfun_tabs1 = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差', '看跌价差', ], key='mulfun1', index = 2)
         if mulfun_tabs1 ==  '宽跨':
             strangle(data, bar, price, contracts_amount, account_amount, fees)
 
@@ -141,4 +150,8 @@ if tabs ==  '多个功能':
         if mulfun_tabs1 ==  '看涨价差':
             #读取剩余日
             bull_spred(price, data, contracts_amount, fees)
+
+        if mulfun_tabs1 ==  '看跌价差':
+            #读取剩余日
+            bear_spred(price, data, contracts_amount, fees)
 

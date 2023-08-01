@@ -60,6 +60,10 @@ margin = spred.margin_bear(
 
 returns / margin
 
+spred.equant_point_call(    
+    K1 = down['执行价'].squeeze(),
+    C1 = down['最新价'].squeeze(),
+    C2 = up['最新价'].squeeze(),)
 
 up,down = spred.chose_contract(contracts=data, current_price=3.952, spred_type = 'P')
 

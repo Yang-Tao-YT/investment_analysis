@@ -148,7 +148,7 @@ def bull_spred(price, data, contracts_amount =  0, fees = 0.0003):
         # up = 3.7
         # down = 3.6
 
-        contracts = pd.concat( spred.chose_contract(data, spred_type=contracts_type.replace('购', 'C').replace('沽', 'P'),current_price= price.origin_data['close'][-1]))
+        contracts = pd.concat( spred.chose_contract(spred_contracts, spred_type=contracts_type.replace('购', 'C').replace('沽', 'P'),current_price= price.origin_data['close'][-1]))
 
         if up is not None:
             contracts.loc[contracts.index[0], 
@@ -194,7 +194,7 @@ def bull_spred(price, data, contracts_amount =  0, fees = 0.0003):
             )[-1] - fees * 2
             returns = returns / margin
 
-            equanpoint = spred.bull_equant_point_call(                    
+            equanpoint = spred.equant_point_call(                    
                         K1 = contracts['执行价'].iloc[1],
                         # K2 = contracts['执行价'].iloc[0],
                         C1 = contracts['最新价'].iloc[1],
@@ -218,7 +218,7 @@ def bull_spred(price, data, contracts_amount =  0, fees = 0.0003):
             )[-1] - fees * 2
             returns = returns / margin
 
-            equanpoint = spred.bull_equant_point_put(                    
+            equanpoint = spred.equant_point_put(                    
                         # K1 = contracts['执行价'].iloc[1],
                         K2 = contracts['执行价'].iloc[0],
                         P1 = contracts['最新价'].iloc[1],
@@ -236,7 +236,7 @@ def bull_spred(price, data, contracts_amount =  0, fees = 0.0003):
             st.info(f'使用保证金{round(margin * contracts_amount, 3)} 万')
 
 
-def put_spred(price, data, contracts_amount =  0, fees = 0.00018):
+def bear_spred(price, data, contracts_amount =  0, fees = 0.00018, key = 'bear'):
         
     spred = Spred()
     tabs2_cols = st.columns(3)
@@ -253,13 +253,16 @@ def put_spred(price, data, contracts_amount =  0, fees = 0.00018):
         contracts_type = st.selectbox('期权类型', ['购' , '沽'], index = 0)
         #select contracts
         spred_contracts =  data.loc[data.名称.str.contains(contracts_type)].sort_values('行权价')
-        up = st.selectbox('up', [None] + list(spred_contracts.行权价), index=0)
-        down = st.selectbox('down', [None] + list(spred_contracts.行权价), index=0)
+        up = st.selectbox('up', [None] + list(spred_contracts.行权价), index=0, key=f'{key}')
+        down = st.selectbox('down', [None] + list(spred_contracts.行权价), index=0, key=f'{key}2')
         # var
-        # up = 3.7
-        # down = 3.6
+        # up = 4.4
+        # down = 4.3
 
-        contracts = pd.concat( spred.chose_contract(data, spred_type=contracts_type.replace('购', 'C').replace('沽', 'P'),current_price= price.origin_data['close'][-1]))
+        contracts = pd.concat( spred.chose_contract(spred_contracts, spred_type=contracts_type.replace('购', 'C').replace('沽', 'P'),
+                                                    current_price= price.origin_data['close'][-1],
+                                                    type = 'bear'),
+                                                    )
 
         if up is not None:
             contracts.loc[contracts.index[0], 
@@ -298,21 +301,23 @@ def put_spred(price, data, contracts_amount =  0, fees = 0.00018):
                     C2 = contracts['最新价'].iloc[0],
                     P0 = price.origin_data['close'][-1],
                     P0_index=price.origin_data['close'][-1],
-                    Pt_index= contracts['执行价'].iloc[0] * 1.1,
+                    Pt_index= contracts['执行价'].iloc[0] * 0.8,
                     N1=1,
                     N2=1,
                     N_underlying=1
             )[-1] - fees * 2
             returns = returns / margin
 
-            equanpoint = spred.bull_equant_point_call(                    
+            equanpoint = spred.equant_point_call(                    
                         K1 = contracts['执行价'].iloc[1],
                         # K2 = contracts['执行价'].iloc[0],
                         C1 = contracts['最新价'].iloc[1],
                         C2 = contracts['最新价'].iloc[0],)
             
-            stats = pd.Series({'收益率' : returns * 100, '均衡价' : equanpoint , '均衡率' : equanpoint / price.origin_data['close'][-1] - 1})
-
+            stats = pd.Series({'收益率' : returns * 100, 
+                               '均衡价' : equanpoint , 
+                               '均衡率' : equanpoint / price.origin_data['close'][-1] - 1,
+                               '保证金' : margin},)
             st.write(stats)
         else:
             returns = spred.bearspread_put(
@@ -329,7 +334,7 @@ def put_spred(price, data, contracts_amount =  0, fees = 0.00018):
             )[-1] - fees * 2
             returns = returns / margin
 
-            equanpoint = spred.bull_equant_point_put(                    
+            equanpoint = spred.equant_point_put(                    
                         # K1 = contracts['执行价'].iloc[1],
                         K2 = contracts['执行价'].iloc[0],
                         P1 = contracts['最新价'].iloc[1],
