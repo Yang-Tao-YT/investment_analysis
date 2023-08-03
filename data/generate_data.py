@@ -310,8 +310,10 @@ class AkShare:
         return temp_df
 
     def current_risk_em(self):
+        # shen hs300 
+        tempdf = self.current_hs300risk_sz_em()
         option_risk_analysis_em_df = self.ak.option_risk_analysis_em()
-        
+        option_risk_analysis_em_df = pd.concat([option_risk_analysis_em_df, tempdf])
         return option_risk_analysis_em_df.sort_values('期权代码')
 
     def current_risk_shangjiao(self, date = None):

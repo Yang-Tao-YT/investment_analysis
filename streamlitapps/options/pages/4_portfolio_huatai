@@ -63,13 +63,7 @@ def load_position(axis = 1):
     dataframe = dataframe.loc[~dataframe.index.isna()]
     return dataframe
 
-dataframe = st.file_uploader('持仓文件',  type="csv")
 
-if  st.button('上传'):
-    if dataframe is not None :
-        dataframe = pd.read_csv(dataframe, dtype=object)
-        st.dataframe(dataframe)
-        dataframe.to_csv('huataiposition.csv', index = False)
 
 if os.path.exists('huataiposition.csv'):
     dataframe = load_position(1)
@@ -139,3 +133,11 @@ if os.path.exists('huataiposition.csv'):
 if st.button('clear'):
     st.cache_data.clear()
     st.session_state.clear()
+
+dataframe = st.file_uploader('持仓文件',  type="csv")
+
+if  st.button('上传'):
+    if dataframe is not None :
+        dataframe = pd.read_csv(dataframe, dtype=object)
+        st.dataframe(dataframe)
+        dataframe.to_csv('huataiposition.csv', index = False)

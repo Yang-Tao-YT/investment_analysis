@@ -90,12 +90,10 @@ def history_return_hist(days):
         df : pd.DataFrame
         pct : pd.Series
         df = stockindex_copy.origin_data.close.copy()
-        # df.loc[list(pd.Series(df.index).apply(check_date))]
-        df.index  = pd.to_datetime(df.index)
-        df = df.loc[pd.to_datetime('2010-06-01' ): ]
 
-        if st.checkbox('exclude extra'):
-            df = df.loc[pd.to_datetime('2016-03-01' ): ]
+        df.index  = pd.to_datetime(df.index)
+        df = df.loc[pd.to_datetime('2010-06-01'): ]
+
 
         df = df.to_frame()
         df['month'] = pd.to_datetime(df.index).strftime('%Y-%m')
@@ -115,15 +113,22 @@ def history_return_hist(days):
         
         df = df.loc[:pd.date_range(df.index[0],df.index[-1],freq='WOM-4WED')[-1]]
 
-        # if datetime.datetime.now().day < 20 :
-        #     df = df.loc[ : (pd.to_datetime(datetime.datetime(datetime.datetime.now().year, datetime.datetime.now().month, 1)) - 
-        #                 pd.Timedelta(days = 1))]
         df = df.groupby('month').apply(returns)
 
         # 在历史上按月份做统计
-        month_col = st.columns(2)
         month_states = df.to_frame('returns').copy() ; month_states.index.name = 'date'
         month_states['month'] = pd.to_datetime(month_states.index).month
+
+        # if 1:
+        if st.checkbox('exclude extra'):
+            #剔除极端收益
+            def _outlier(df):
+                df = df.loc[(df.returns != df.returns.min()) & (df.returns != df.returns.max())]
+                return df
+            
+            month_states = month_states.groupby('month').apply(_outlier).droplevel(0)
+
+        month_col = st.columns(2)
         stats = pd.DataFrame()
         stats['median'] = month_states.groupby('month').median()
         stats['mean'] = month_states.groupby('month').mean()

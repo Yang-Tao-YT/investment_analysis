@@ -17,8 +17,7 @@ def strangle(data, bar, price, contracts_amount, account_amount, fees = 0.0003):
 
 
         st.write(calls.set_index('行权价')[['最新价', '比例']].join(puts.set_index('行权价')[['最新价']],
-                                                          lsuffix = 'calls_', rsuffix = 'puts_')
-)
+                                                          lsuffix = 'calls_', rsuffix = 'puts_'))
 
 
     with cols[0]:
@@ -38,15 +37,11 @@ def strangle(data, bar, price, contracts_amount, account_amount, fees = 0.0003):
         if put is not None:
             contracts.loc[contracts.名称.str.contains('沽'), puts.loc[puts.行权价 == put].rename(columns = {'行权价' : '执行价'}).columns] = list( puts.loc[puts.行权价 == put].squeeze())
 
-
-
-
-
     with cols[0]:
         _price = price.origin_data; _price['前收盘'] = _price['close'].shift()
         contracts = calculate_mergin(contracts, _price.iloc[-1, :])
         combine_margin = max(contracts['保证金']) + min(contracts['最新价'])
-        st.write(contracts)
+        st.write(contracts.set_index('名称'))
         returns = (contracts["最新价"].sum() - fees * 2) / combine_margin 
 
         # 计算risk指标
@@ -58,15 +53,20 @@ def strangle(data, bar, price, contracts_amount, account_amount, fees = 0.0003):
         )
 
         st.dataframe(risk_indicators)
-        
+
+        st.info('按金额')
+        _contracts_amount = account_amount / combine_margin /10000
+        st.info(f'收益率为{returns * 100} %')
+        st.info(f'收益为{round(returns * account_amount / 10000, 3)} 万')
+        st.info(f'手数为{round(_contracts_amount)}')
+        st.dataframe(round(risk_indicators * _contracts_amount * 10000))
+
         if contracts_amount != 0:
             st.info(f'收益为{round((contracts["最新价"].sum() - fees * 2) * contracts_amount, 3)} 万')
             st.info(f'使用保证金{round(combine_margin * contracts_amount, 3)} 万')
-        st.info(f'收益率为{returns * 100} %')
-        st.info(f'收益为{round(returns * account_amount / 10000, 3)} 万')
+        
 
     return calls, puts
-
 
 def multichoice_strangle(data, price, contracts_amount, account_amount, fees = 0.0003):
         calls = data.loc[data.名称.str.contains('购')].sort_values('行权价')
@@ -105,6 +105,12 @@ def multichoice_strangle(data, price, contracts_amount, account_amount, fees = 0
         _price = price.origin_data; _price['前收盘'] = _price['close'].shift()
         contracts = calculate_mergin(contracts, _price.iloc[-1, :])
         combine_margin = max(contracts['保证金']) + min(contracts['最新价'])
+        # 计算手数
+        _contracts_amount = account_amount / combine_margin /10000
+        # 计算市值
+        contracts.insert(4, '市值', round(contracts['最新价']  * contracts['pecentage'] * _contracts_amount * 10000))
+        contracts.insert(4, '手数', round(_contracts_amount  * contracts['pecentage'] ))
+
         st.write(contracts)
         returns = (contracts["最新价"].dot(contracts['pecentage']) - fees * 2) / combine_margin 
         # 计算risk指标
@@ -113,30 +119,28 @@ def multichoice_strangle(data, price, contracts_amount, account_amount, fees = 0
         risk_indicators[['Delta' ,  'Gamma'  ,  'Vega'  ,   'Rho',   'Theta']] =(
             risk_indicators[['Delta' ,  'Gamma'  ,  'Vega'  ,   'Rho',   'Theta']] * -1
         )
-        st.dataframe(risk_indicators)
+
 
         contracts_amount = st.number_input('手数', value = 0, key='123')
         if contracts_amount != 0:
             st.info(f'收益为{round((contracts["最新价"].dot(contracts["pecentage"]) - fees * 2) * contracts_amount, 3)} 万')
             st.info(f'使用保证金{round(combine_margin * contracts_amount, 3)} 万')
 
+        st.info('按金额')
+
+        st.info(f'手数为{round(_contracts_amount)}')
         st.info(f'收益率为{returns * 100} %')
         st.info(f'收益为{round(returns * account_amount / 10000, 3)} 万')
+        st.dataframe(round(risk_indicators * _contracts_amount * 10000))     
+        st.dataframe(risk_indicators)
 
 
-
-def bull_spred(price, data, contracts_amount =  0, fees = 0.0003):
+def bull_spred(price, data, contracts_amount =  0, fees = 0.0003, account_amount = 0):
         
     spred = Spred()
     tabs2_cols = st.columns(3)
-    # days = st.selectbox('剩余日' , days, index = 0) #剩余日
-    # account_amount = st.number_input('成本/万', value = 70) * 10000
-    # contracts_amount = st.number_input('手数', value = 0)
 
-    # data = data.loc[data['剩余日'] ==  days].copy()
-    # with cols[2]:
-    #     display_returns_scale(bar, '23')
-
+    #
     with tabs2_cols[1]:
         #select contracts types
         contracts_type = st.selectbox('期权类型', ['购' , '沽'], index = 1)
@@ -231,12 +235,21 @@ def bull_spred(price, data, contracts_amount =  0, fees = 0.0003):
 
             st.write(stats)
 
+        if account_amount != 0:
+            _contracts_amount = account_amount / margin / 10000
+            st.info('按金额')
+            st.info(f'收益为{round(returns * margin  * _contracts_amount, 3)} 万')
+            st.info(f'使用保证金{round(margin * _contracts_amount, 3)} 万')
+            st.info(f'手数为{_contracts_amount}')
+            st.write(risk_indicators * 10000 * _contracts_amount)
+
         if contracts_amount != 0:
+            st.info('按手数')
             st.info(f'收益为{round(returns * margin  * contracts_amount, 3)} 万')
             st.info(f'使用保证金{round(margin * contracts_amount, 3)} 万')
+            st.write(risk_indicators * 10000 * contracts_amount)
 
-
-def bear_spred(price, data, contracts_amount =  0, fees = 0.00018, key = 'bear'):
+def bear_spred(price, data, contracts_amount =  0, fees = 0.00018, key = 'bear', account_amount = 0):
         
     spred = Spred()
     tabs2_cols = st.columns(3)
@@ -347,6 +360,16 @@ def bear_spred(price, data, contracts_amount =  0, fees = 0.00018, key = 'bear')
 
             st.write(stats)
 
+        if account_amount != 0:
+            _contracts_amount = account_amount / margin / 10000
+            st.info('按金额')
+            st.info(f'收益为{round(returns * margin  * _contracts_amount, 3)} 万')
+            st.info(f'使用保证金{round(margin * _contracts_amount, 3)} 万')
+            st.info(f'手数为{_contracts_amount}')
+            st.write(risk_indicators * 10000 * _contracts_amount)
+
         if contracts_amount != 0:
+            st.info('按手数')
             st.info(f'收益为{round(returns * margin  * contracts_amount, 3)} 万')
             st.info(f'使用保证金{round(margin * contracts_amount, 3)} 万')
+            st.write(risk_indicators * 10000 * contracts_amount)

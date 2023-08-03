@@ -42,6 +42,23 @@ def return_stockindex(symbol, setting : dict = None):
         stockindex.update_setting(setting=setting)
     return stockindex
 
+def fun_tool(key1,index=0):
+    mulfun_tabs1 = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差', '看跌价差', ], key=f'mulfun0{key1}', index=index)
+    if mulfun_tabs1 ==  '宽跨':
+        strangle(data, bar, price, contracts_amount, account_amount, fees)
+
+    if mulfun_tabs1 ==  '宽跨定制':
+        '''多个选择'''
+        multichoice_strangle(data, price, contracts_amount, account_amount, fees)
+
+    if mulfun_tabs1 ==  '看涨价差':
+        #读取剩余日
+        bull_spred(price, data, contracts_amount, fees, account_amount=account_amount)
+
+    if mulfun_tabs1 ==  '看跌价差':
+        #读取剩余日
+        bear_spred(price, data, contracts_amount, fees, account_amount=account_amount)
+
 if 'loader' not in st.session_state:
     trad = option_strategy.Trading()
     st.session_state['loader'] = loader =  DataLoader()
@@ -62,7 +79,7 @@ data = pd.concat([data, hs300])
 data = data.set_index('代码')
 data = data.apply(pd.to_numeric,args=['ignore'])
 # 选择标的
-symbol_chs = st.selectbox('code',['中证500' , '沪深300', '上证50', '创业板指', '科创50', '（深）沪深300'], index = 1)
+symbol_chs = st.selectbox('code',['中证500' , '沪深300', '上证50', '创业板指', '科创50', '（深）沪深300'], index = 5)
 symbol = name_2_symbol[symbol_chs]
 
 # 读取标的行情
@@ -100,7 +117,11 @@ with set_cols[3]:
 
 data = data.loc[data['剩余日'] ==  days].copy()
 
-tabs = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差', '看跌价差', '多个功能'], index=3)
+
+
+
+
+tabs = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差', '看跌价差', '多个功能'], index=4)
 
 st.write('-' * 20)
 if tabs ==  '宽跨':
@@ -112,46 +133,18 @@ if tabs ==  '宽跨定制':
 
 if tabs ==  '看涨价差':
     #读取剩余日
-    bull_spred(price, data, contracts_amount, fees)
+    bull_spred(price, data, contracts_amount, fees, account_amount=account_amount)
 
 if tabs ==  '看跌价差':
     #读取剩余日
-    bear_spred(price, data, contracts_amount, fees)
+    bear_spred(price, data, contracts_amount, fees, account_amount=account_amount)
 
 if tabs ==  '多个功能':
     mulfun = st.columns(2)
     with mulfun[0]:
-        mulfun_tabs1 = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差', '看跌价差', ], key='mulfun0')
-        if mulfun_tabs1 ==  '宽跨':
-            strangle(data, bar, price, contracts_amount, account_amount, fees)
-
-        if mulfun_tabs1 ==  '宽跨定制':
-            '''多个选择'''
-            multichoice_strangle(data, price, contracts_amount, account_amount, fees)
-
-        if mulfun_tabs1 ==  '看涨价差':
-            #读取剩余日
-            bull_spred(price, data, contracts_amount, fees)
-
-        if mulfun_tabs1 ==  '看跌价差':
-            #读取剩余日
-            bear_spred(price, data, contracts_amount, fees)
+        fun_tool(0)
 
 
     with mulfun[1]:
-        mulfun_tabs1 = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差', '看跌价差', ], key='mulfun1', index = 2)
-        if mulfun_tabs1 ==  '宽跨':
-            strangle(data, bar, price, contracts_amount, account_amount, fees)
-
-        if mulfun_tabs1 ==  '宽跨定制':
-            '''多个选择'''
-            multichoice_strangle(data, price, contracts_amount, account_amount, fees)
-
-        if mulfun_tabs1 ==  '看涨价差':
-            #读取剩余日
-            bull_spred(price, data, contracts_amount, fees)
-
-        if mulfun_tabs1 ==  '看跌价差':
-            #读取剩余日
-            bear_spred(price, data, contracts_amount, fees)
+        fun_tool(1,2)
 

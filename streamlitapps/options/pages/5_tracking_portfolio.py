@@ -72,22 +72,15 @@ def load_position(axis = 1):
         dataframe1 = pd.concat([dataframe1, dataframe], axis = 0).sort_index()
     return dataframe1
 
-dataframe = st.file_uploader('持仓文件',  type="xls")
 
-if dataframe is not None:
-    import xlrd
-    dataframe = dataframe.getvalue()
-    with open('position.txt', 'wb') as f:
-        f.write(dataframe)
-    # st.write(dataframe)
-    dataframe = xlrd.open_workbook('position.txt', encoding_override='gbk')
-    dataframe = pd.read_excel(dataframe, engine='xlrd')
-    st.dataframe(dataframe)
-    dataframe.to_csv('position.csv', encoding = 'utf-8-sig', index = False)
-    os.remove('position.txt')
     
 if os.path.exists('position.csv') or os.path.exists('huataiposition.csv'):
     dataframe = load_position(1)
+    dataframe['under'] = dataframe.合约名称.str[:6]
+    # 筛选
+    filters = st.selectbox('underlying', [None] + [*dataframe.under.unique()])
+    if filters is not None:
+        dataframe = dataframe.loc[dataframe.under == filters]
     # price
     data = loader.current_em()
     hs300 = loader.current_hs300sz_em()
@@ -99,9 +92,8 @@ if os.path.exists('position.csv') or os.path.exists('huataiposition.csv'):
     
     # greek
     greek = loader.current_risk_em()
-
-    hs300 = loader.current_hs300risk_sz_em()
-    greek = pd.concat([greek, hs300])
+    # hs300 = loader.current_hs300risk_sz_em()
+    # greek = pd.concat([greek, hs300])
     greek = greek.set_index('期权代码')
     greek = greek.apply(pd.to_numeric,args=['ignore'])
 
@@ -124,6 +116,17 @@ if os.path.exists('position.csv') or os.path.exists('huataiposition.csv'):
     
     test.loc[test.合约名称.str.contains('500ETF')| test.合约名称.str.contains('510500') , '行权价'] = test.loc[test.合约名称.str.contains('500ETF')| test.合约名称.str.contains('510500') , '行权价'] / zz500_price - 1
     trad.position.insert(4, '比例', list((test['行权价'] * 100).values) + [None]) 
+    trad.position.insert(4, '比例绝对值', list(abs(test['行权价'] * 100).values) + [None]) 
+
+    # from st_aggrid import AgGrid, GridOptionsBuilder
+    # from st_aggrid.shared import  ColumnsAutoSizeMode
+
+    # dfssss=AgGrid(trad.position, 
+    #                 # gridOptions=grid_options,
+    #             #   editable =True, 
+    #             #   width = 1, 
+    #                 columns_auto_size_mode=ColumnsAutoSizeMode.FIT_ALL_COLUMNS_TO_VIEW
+    #                 )
 
     st.dataframe(trad.position,
                  column_config={
@@ -144,9 +147,11 @@ if os.path.exists('position.csv') or os.path.exists('huataiposition.csv'):
             format="%.2f %%",
         )
     } , height=trad.position.shape[0] * 40)
+
     st.info(f"浮动盈亏 {profit}")
     st.info(f"potential earning : {round (trad.position.loc['统计', ['合约市值','浮动盈亏']].sum(), 2)}")
     st.info(f"earned pctg : {round(profit / trad.position.loc['统计', ['合约市值','浮动盈亏']].sum() * 100,3)} %")
+    st.info(f"盈亏比例 : {round(trad.position.loc['统计', '涨跌额'] / 120 / 10000,3) }%")
 
 
     debug = 1
@@ -154,3 +159,11 @@ if os.path.exists('position.csv') or os.path.exists('huataiposition.csv'):
 if st.button('clear'):
     st.cache_data.clear()
     st.session_state.clear()
+
+dataframe = st.file_uploader('持仓文件',  type="csv")
+
+if  st.button('上传'):
+    if dataframe is not None :
+        dataframe = pd.read_csv(dataframe, dtype=object)
+        st.dataframe(dataframe)
+        dataframe.to_csv('huataiposition.csv', index = False)
