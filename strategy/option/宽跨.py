@@ -35,11 +35,11 @@ class StrangleOption(Strategy):
             
             contracts.loc[(contracts.期权类型 == 'P')]
             down = contracts.loc[(contracts.执行价.astype(float) <= down) & 
-                                (contracts.期权类型 == 'P')].sort_values('执行价')['合约编码']
+                                (contracts.期权类型 == 'P')].sort_values('执行价', ascending = False)['合约编码']
             if down.shape[0] == 1:
                 down = down.iloc[0]
             else:
-                down = down.iloc[1]
+                down = down.iloc[0]
 
         elif round_type == 'up':        
             up = contracts.loc[(contracts.执行价.astype(float) <= up) & 

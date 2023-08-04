@@ -21,11 +21,13 @@ def calculate_risk(data, setting):
 def load_history_data():
     data = {}
     for key, value in name_2_symbol.items():
-        symbol = value
-        data[symbol] =  pd.read_csv(f'{config.path_hist_k_data}/{symbol}.csv')
-        print(symbol)
-        print('----------------')
-
+        try:
+            symbol = value
+            data[symbol] =  pd.read_csv(f'{config.path_hist_k_data}/{symbol}.csv')
+            print(symbol)
+            print('----------------')
+        except:
+             pass
     return data
 
 def backtest_main():

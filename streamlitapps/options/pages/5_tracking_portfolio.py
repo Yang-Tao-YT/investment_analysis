@@ -41,6 +41,36 @@ def return_stockindex(symbol, setting : dict = None):
         stockindex.update_setting(setting=setting)
     return stockindex
 
+def dataframe_display(df):
+    st.dataframe(df,
+                 column_config={
+        "比例": st.column_config.NumberColumn(
+            "行权涨跌幅%",
+            help="The price of the product in USD",
+            min_value=0,
+            max_value=1000,
+            # step=1,
+            format="%.2f %%",
+        ),
+        "比例绝对值": st.column_config.NumberColumn(
+            "行权涨跌幅%",
+            help="The price of the product in USD",
+            min_value=0,
+            max_value=1000,
+            # step=1,
+            format="%.2f %%",
+        ),
+        "涨跌幅": st.column_config.NumberColumn(
+            "涨跌幅%",
+            help="The price of the product in USD",
+            min_value=0,
+            max_value=1000,
+            # step=1,
+            format="%.2f %%",
+        )
+    } , height=df.shape[0] * 43)
+
+
 @st.cache_data
 def load_position(axis = 1):
     # dataframe = pd.read_csv('position.csv', encoding = 'utf-8-sig', index_col=0)
@@ -81,6 +111,14 @@ if os.path.exists('position.csv') or os.path.exists('huataiposition.csv'):
     filters = st.selectbox('underlying', [None] + [*dataframe.under.unique()])
     if filters is not None:
         dataframe = dataframe.loc[dataframe.under == filters]
+
+    months = dataframe.合约名称.str.split('月', expand=True)[0].str[-1].unique()
+    filters2 = st.selectbox('months', [None] + [*months])
+    # filters2 = 9
+    if filters2 is not None:
+        dataframe = dataframe.loc[dataframe.合约名称.str.contains(f'{filters2}月')]
+        
+
     # price
     data = loader.current_em()
     hs300 = loader.current_hs300sz_em()
@@ -128,26 +166,17 @@ if os.path.exists('position.csv') or os.path.exists('huataiposition.csv'):
     #                 columns_auto_size_mode=ColumnsAutoSizeMode.FIT_ALL_COLUMNS_TO_VIEW
     #                 )
 
-    st.dataframe(trad.position,
-                 column_config={
-        "比例": st.column_config.NumberColumn(
-            "行权涨跌幅%",
-            help="The price of the product in USD",
-            min_value=0,
-            max_value=1000,
-            # step=1,
-            format="%.2f %%",
-        ),
-        "涨跌幅": st.column_config.NumberColumn(
-            "涨跌幅%",
-            help="The price of the product in USD",
-            min_value=0,
-            max_value=1000,
-            # step=1,
-            format="%.2f %%",
-        )
-    } , height=trad.position.shape[0] * 40)
-
+    if st.checkbox('按合约'):
+        #按不同合约标的展示
+        unders = trad.position.under.dropna().unique()
+        for _under in unders:
+            temp_df = trad.position.loc[trad.position.under == _under]
+            temp_df.loc['统计',['浮动盈亏', '合约市值', '涨跌额','Delta', 'Gamma', 'Vega', 'Rho', 'Theta'] ] = (
+                            temp_df[ ['浮动盈亏', '合约市值', '涨跌额', 'Delta', 'Gamma', 'Vega', 'Rho', 'Theta'] ].sum(axis = 0))
+            dataframe_display(temp_df)
+        dataframe_display(trad.position.loc['统计'].to_frame().T)
+    else:
+        dataframe_display(trad.position)
     st.info(f"浮动盈亏 {profit}")
     st.info(f"potential earning : {round (trad.position.loc['统计', ['合约市值','浮动盈亏']].sum(), 2)}")
     st.info(f"earned pctg : {round(profit / trad.position.loc['统计', ['合约市值','浮动盈亏']].sum() * 100,3)} %")

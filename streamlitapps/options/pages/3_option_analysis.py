@@ -121,7 +121,7 @@ data = data.loc[data['剩余日'] ==  days].copy()
 
 
 
-tabs = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差', '看跌价差', '多个功能'], index=4)
+tabs = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差', '看跌价差', '多个功能'], index=0)
 
 st.write('-' * 20)
 if tabs ==  '宽跨':

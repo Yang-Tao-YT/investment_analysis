@@ -238,7 +238,7 @@ class Trading:
         temp_df = self.position.copy()
         temp_df = temp_df.drop('最新价', axis = 1, ).join(self.bar.df).copy()
         # 计算市值
-        temp_df['合约市值'] =  temp_df[ '最新价'] * temp_df['实际持仓']*10000
+        temp_df['合约市值'] =  temp_df[ '最新价'] * temp_df['实际持仓'] * temp_df['持仓类型'] *10000
 
         #计算盈亏
         temp_df[ '浮动盈亏'] =  ((temp_df['最新价']* temp_df[ '持仓类型']  -

@@ -17,8 +17,8 @@ def calcualte_returns_per_month(_portfolios : pd.Series, option_price, _trade_da
     _option_price = _portfolio['收盘价'].astype(float)
     combine_margin = max(_portfolio['保证金']) + min(_option_price)
 
-    print(_portfolio['执行价'].astype(float) / _price['收盘'])
-    print(_option_price, combine_margin)
+    # print(_portfolio['执行价'].astype(float) / _price['收盘'])
+    # print(_option_price, combine_margin)
     values = (_option_price * _portfolio['shares']).sum()
     cost = combine_margin
 
@@ -29,7 +29,13 @@ def calcualte_returns_per_month(_portfolios : pd.Series, option_price, _trade_da
     gain = values_end - values
     returns = gain / cost
     
-    return returns
+    result = {}
+    result['执行价格'] = _portfolio['执行价'].astype(float) / _price['收盘']
+    result['return'] = returns
+    result['option_price'] = _option_price
+    result['combine_margin'] = combine_margin
+
+    return result
 
 def calcualte_returns(portfolio):
     price = _get_hs300_history_unadjust() ; price['前收盘'] = price['收盘'].shift() ; price.index = pd.to_datetime(price['日期'])
@@ -38,68 +44,58 @@ def calcualte_returns(portfolio):
     option_price['前收盘价'] = option_price['收盘价'].unstack().shift(1).stack()
 
     portfolio.index = pd.to_datetime(portfolio.index)
+
+    records = {}
     for day in portfolio.index:
-        print(calcualte_returns_per_month(portfolio.loc[day], option_price, day, price))
+        records[day] = calcualte_returns_per_month(portfolio.loc[day], option_price, day, price)
+        # print(calcualte_returns_per_month(portfolio.loc[day], option_price, day, price))
+    return records
+
+stra = StrangleOption()
+
+option_price = _get_hs300_history_options(2022) ; option_price['日期'] = pd.to_datetime(option_price['日期'])
+# option_price = option_price.set_index(['日期' , '合约编码'], drop=False)
 
 
-# stra = StrangleOption()
-
-# option_price = _get_hs300_history_options(2022) ; option_price['日期'] = pd.to_datetime(option_price['日期'])
-# # option_price = option_price.set_index(['日期' , '合约编码'], drop=False)
-
-
-# portfolio = stra.generate_portfolios(data=option_price,)
-# # portfolio = {pd.to_datetime(k) : v for k,v in portfolio.items()}
-# portfolio = pd.concat(portfolio) 
-# portfolio = portfolio.direction.unstack()
-# if isinstance(portfolio, pd.Series) : 
-#     portfolio = portfolio.to_frame() 
+portfolio = stra.generate_portfolios(data=option_price,)
+# portfolio = {pd.to_datetime(k) : v for k,v in portfolio.items()}
+portfolio = pd.concat(portfolio) 
+portfolio = portfolio.direction.unstack()
+if isinstance(portfolio, pd.Series) : 
+    portfolio = portfolio.to_frame() 
 
 
+results = calcualte_returns(portfolio)
+test = pd.DataFrame(results).T
+test[['执行价格', 'return']]
+# results[0]
+turnover_days = portfolio.index
+_trade_day  = pd.to_datetime('2022-01-06')
+_trade_day  = pd.to_datetime('2022-01-05')
+values_record = []
+portfolio_records = []
+option_price = option_price.set_index(['日期' , '合约编码'], drop=False)
+for _trade_day in turnover_days:
+        _portfolio = portfolio.loc[_trade_day]
+        _option_price = option_price.loc[_trade_day]
+        _price = price.loc[_trade_day]
 
-
-
-
-# _trade_day  = pd.to_datetime('2022-01-06')
-# _trade_day  = pd.to_datetime('2022-01-05')
-# values_record = []
-# portfolio_records = []
-# for _trade_day in trading_days:
-#     if _trade_day in turnover_days:
-#         _portfolio = portfolio.loc[_trade_day]
-#         _option_price = option_price.loc[_trade_day]
-#         _price = price.loc[_trade_day]
-
-#         _option_price
-#         _portfolio = _portfolio.dropna()
-#         _portfolio = _portfolio.to_frame('shares').join(_option_price)
+        _option_price
+        _portfolio = _portfolio.dropna()
+        _portfolio = _portfolio.to_frame('shares').join(_option_price)
         
 
-#         _portfolio = calculate_mergin(_portfolio, _price)
-#         _option_price = _portfolio['收盘价'].astype(float)
-#         _portfolio['标的收盘价']
-#         combine_margin = max(_portfolio['保证金']) + min(_option_price)
+        _portfolio = calculate_mergin(_portfolio, _price)
+        _option_price = _portfolio['收盘价'].astype(float)
+        _portfolio['标的收盘价']
+        combine_margin = max(_portfolio['保证金']) + min(_option_price)
 
-#         values = (_option_price * _portfolio['shares']).sum()
-#         cost = combine_margin
-#         gain = 0
-#         returns = gain / cost
-#         values_record += [{'date' : _trade_day, 'cost' : cost, 'values' : values, 'returns' : returns}]
-#         portfolio_records +=[ _portfolio[['shares']]]
-
-#     elif len(_portfolio) > 0:
-#         # 获取上期持仓和当期价格
-#         _portfolio = portfolio_records[-1]
-#         _option_price = option_price.loc[_trade_day]
-
-#         # 计算当期净值
-#         _portfolio = _portfolio.join(_option_price)
-#         _option_price = _portfolio['收盘价'].astype(float)
-
-#         values = (_option_price * _portfolio['shares']).sum()
-#         gain = values - values_record[-1]['values']
-
-#         returns = gain / 1
+        values = (_option_price * _portfolio['shares']).sum()
+        cost = combine_margin
+        gain = 0
+        returns = gain / cost
+        values_record += [{'date' : _trade_day, 'cost' : cost, 'values' : values, 'returns' : returns}]
+        portfolio_records +=[ _portfolio[['shares']]]
 
 
 
