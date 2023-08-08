@@ -3,7 +3,16 @@ from data.database import _get_hs300_history_options, _get_hs300_history, _get_h
 from utils.calculate import calculate_call_margin, calculate_put_margin, calculate_mergin
 import pandas as pd
 
+class Records:
+    records = {}
+    def __init__(self):
+        pass
 
+    def display_returns(self):
+        return pd.Series({k : v['return'] for k,v in self.records.items()})
+    
+    def display_exc_price(self):
+        return pd.Series({k : (v['执行价格'].round(3) - 1).values for k,v in self.records.items()})
 
 def calcualte_returns_per_month(_portfolios : pd.Series, option_price, _trade_day, price):
 
@@ -24,8 +33,8 @@ def calcualte_returns_per_month(_portfolios : pd.Series, option_price, _trade_da
 
     # 最终value
     _portfolio = _portfolios.loc[_portfolios.index.get_level_values(0)[-1]].copy()
-    _option_price = _portfolio['收盘价'].astype(float)
-    values_end = (_option_price * _portfolio['shares']).sum()
+    _option_price_end = _portfolio['收盘价'].astype(float)
+    values_end = (_option_price_end * _portfolio['shares']).sum()
     gain = values_end - values
     returns = gain / cost
     
@@ -45,9 +54,9 @@ def calcualte_returns(portfolio):
 
     portfolio.index = pd.to_datetime(portfolio.index)
 
-    records = {}
+    records = Records()
     for day in portfolio.index:
-        records[day] = calcualte_returns_per_month(portfolio.loc[day], option_price, day, price)
+        records.records[day] = calcualte_returns_per_month(portfolio.loc[day], option_price, day, price)
         # print(calcualte_returns_per_month(portfolio.loc[day], option_price, day, price))
     return records
 
@@ -66,36 +75,38 @@ if isinstance(portfolio, pd.Series) :
 
 
 results = calcualte_returns(portfolio)
-test = pd.DataFrame(results).T
-test[['执行价格', 'return']]
-# results[0]
-turnover_days = portfolio.index
-_trade_day  = pd.to_datetime('2022-01-06')
-_trade_day  = pd.to_datetime('2022-01-05')
-values_record = []
-portfolio_records = []
-option_price = option_price.set_index(['日期' , '合约编码'], drop=False)
-for _trade_day in turnover_days:
-        _portfolio = portfolio.loc[_trade_day]
-        _option_price = option_price.loc[_trade_day]
-        _price = price.loc[_trade_day]
+results.display_returns()
+pass
+# test = pd.DataFrame(results).T
+# test[['执行价格', 'return']]
+# # results[0]
+# turnover_days = portfolio.index
+# _trade_day  = pd.to_datetime('2022-01-06')
+# _trade_day  = pd.to_datetime('2022-01-05')
+# values_record = []
+# portfolio_records = []
+# option_price = option_price.set_index(['日期' , '合约编码'], drop=False)
+# for _trade_day in turnover_days:
+#         _portfolio = portfolio.loc[_trade_day]
+#         _option_price = option_price.loc[_trade_day]
+#         _price = price.loc[_trade_day]
 
-        _option_price
-        _portfolio = _portfolio.dropna()
-        _portfolio = _portfolio.to_frame('shares').join(_option_price)
+#         _option_price
+#         _portfolio = _portfolio.dropna()
+#         _portfolio = _portfolio.to_frame('shares').join(_option_price)
         
 
-        _portfolio = calculate_mergin(_portfolio, _price)
-        _option_price = _portfolio['收盘价'].astype(float)
-        _portfolio['标的收盘价']
-        combine_margin = max(_portfolio['保证金']) + min(_option_price)
+#         _portfolio = calculate_mergin(_portfolio, _price)
+#         _option_price = _portfolio['收盘价'].astype(float)
+#         _portfolio['标的收盘价']
+#         combine_margin = max(_portfolio['保证金']) + min(_option_price)
 
-        values = (_option_price * _portfolio['shares']).sum()
-        cost = combine_margin
-        gain = 0
-        returns = gain / cost
-        values_record += [{'date' : _trade_day, 'cost' : cost, 'values' : values, 'returns' : returns}]
-        portfolio_records +=[ _portfolio[['shares']]]
+#         values = (_option_price * _portfolio['shares']).sum()
+#         cost = combine_margin
+#         gain = 0
+#         returns = gain / cost
+#         values_record += [{'date' : _trade_day, 'cost' : cost, 'values' : values, 'returns' : returns}]
+#         portfolio_records +=[ _portfolio[['shares']]]
 
 
 
