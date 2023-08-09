@@ -42,7 +42,7 @@ def return_stockindex(symbol, setting : dict = None):
     return stockindex
 
 def dataframe_display(df):
-    st.dataframe(df,
+    st.data_editor(df,
                  column_config={
         "比例": st.column_config.NumberColumn(
             "行权涨跌幅%",
@@ -138,6 +138,7 @@ if os.path.exists('position.csv') or os.path.exists('huataiposition.csv'):
 
     trad.update_bar(data)
     trad.update_greek(greek)
+    # dataframe = st.data_editor(dataframe)
     trad.load_position(dataframe)
     profit = trad.profit()
 
