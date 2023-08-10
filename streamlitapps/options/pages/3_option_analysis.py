@@ -79,7 +79,7 @@ data = pd.concat([data, hs300])
 data = data.set_index('代码')
 data = data.apply(pd.to_numeric,args=['ignore'])
 # 选择标的
-symbol_chs = st.selectbox('code',['中证500' , '沪深300', '上证50', '创业板指', '科创50', '（深）沪深300'], index = 5)
+symbol_chs = st.selectbox('code',['中证500' , '沪深300', '上证50', '创业板指', '科创50', '（深）沪深300'], index = 1)
 symbol = name_2_symbol[symbol_chs]
 
 # 读取标的行情

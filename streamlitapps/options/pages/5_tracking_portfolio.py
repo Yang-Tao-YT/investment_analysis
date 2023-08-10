@@ -42,7 +42,7 @@ def return_stockindex(symbol, setting : dict = None):
     return stockindex
 
 def dataframe_display(df):
-    st.data_editor(df,
+    st.dataframe(df,
                  column_config={
         "比例": st.column_config.NumberColumn(
             "行权涨跌幅%",
@@ -138,7 +138,14 @@ if os.path.exists('position.csv') or os.path.exists('huataiposition.csv'):
 
     trad.update_bar(data)
     trad.update_greek(greek)
-    # dataframe = st.data_editor(dataframe)
+    cols2  = st.columns(2)
+    with cols2[0]:
+        contract_split = st.checkbox('按合约')
+    with cols2[1]:
+        if_edit = st.checkbox('edit')
+    
+    if if_edit:
+        dataframe = st.data_editor(dataframe)
     trad.load_position(dataframe)
     profit = trad.profit()
 
@@ -167,7 +174,7 @@ if os.path.exists('position.csv') or os.path.exists('huataiposition.csv'):
     #                 columns_auto_size_mode=ColumnsAutoSizeMode.FIT_ALL_COLUMNS_TO_VIEW
     #                 )
 
-    if st.checkbox('按合约'):
+    if contract_split:
         #按不同合约标的展示
         unders = trad.position.under.dropna().unique()
         for _under in unders:
