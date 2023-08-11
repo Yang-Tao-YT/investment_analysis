@@ -138,10 +138,12 @@ if os.path.exists('position.csv') or os.path.exists('huataiposition.csv'):
 
     trad.update_bar(data)
     trad.update_greek(greek)
-    cols2  = st.columns(2)
+    cols2  = st.columns(3)
     with cols2[0]:
         contract_split = st.checkbox('按合约')
     with cols2[1]:
+        type_split = st.checkbox('按类型')
+    with cols2[2]:
         if_edit = st.checkbox('edit')
     
     if if_edit:
@@ -183,6 +185,15 @@ if os.path.exists('position.csv') or os.path.exists('huataiposition.csv'):
                             temp_df[ ['浮动盈亏', '合约市值', '涨跌额', 'Delta', 'Gamma', 'Vega', 'Rho', 'Theta'] ].sum(axis = 0))
             dataframe_display(temp_df)
         dataframe_display(trad.position.loc['统计'].to_frame().T)
+    elif type_split:
+        for _under in  ['购', '沽']:
+            temp_df = trad.position.drop('统计')
+            temp_df = temp_df.loc[temp_df.合约名称.str.contains(_under)]
+            temp_df.loc['统计',['浮动盈亏', '合约市值', '涨跌额','Delta', 'Gamma', 'Vega', 'Rho', 'Theta'] ] = (
+                            temp_df[ ['浮动盈亏', '合约市值', '涨跌额', 'Delta', 'Gamma', 'Vega', 'Rho', 'Theta'] ].sum(axis = 0))
+            dataframe_display(temp_df)
+        dataframe_display(trad.position.loc['统计'].to_frame().T)
+
     else:
         dataframe_display(trad.position)
     st.info(f"浮动盈亏 {profit}")
