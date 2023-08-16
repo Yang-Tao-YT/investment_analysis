@@ -24,13 +24,20 @@ def calcualte_indicator(x, setting = None):
     bar = result.bar
     percent = result.percent
     percent = {k: str(round(v * 100, 2)) + '%' for k,v in percent.items()}
+    last_indicator = result.last_indicator
 
-    df = pd.DataFrame({'risk' : indicator, '当日涨跌' : percent, 'quantile' : result.quantile, 'bar' : bar}).sort_values('risk')
+    df = pd.DataFrame({'risk' : indicator, 
+                       '当日涨跌' : percent, 
+                       'quantile' : result.quantile, 
+                       'bar' : bar,
+                       'last_indicator' : last_indicator}).sort_values('risk')
 
-    # df = pd.DataFrame([indicator, bar, result.quantile], index = ['risk', '当日涨跌', 'quantile']).T.sort_values('risk')
+    df['risk_diff'] = df['risk'] - df['last_indicator']
+    df = df.drop('last_indicator', axis=1)
     return df
 
-
+# def colored_text(var):
+#     return f'<span style="color:{color}">{text}</span>'
 
 window = st.number_input('window', value=0)
 
@@ -40,7 +47,8 @@ else:
     setting = {'ma_window' : window}
 
 st.write(setting)
-st.dataframe(calcualte_indicator(1, setting))
+df = calcualte_indicator(1, setting)
+st.dataframe(df.style.background_gradient(cmap = 'Blues', axis = 0, subset = (  'risk' )))
 
 
 

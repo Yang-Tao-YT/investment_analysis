@@ -2,12 +2,19 @@ import copy
 import pandas as pd
 from utils.basic import name_2_symbol, rename_dataframe, Bar, send_to
 from stock_strategy import StockIndex, stock_etf_hist_dataloader
+import numpy as np
 
 class Results:
     indicator = None
     bar = None
     quantile = None
     percent = None
+    last_indicator = None
+
+    def set_attr(self, **kwargs):
+        for k,v in kwargs.items():
+            setattr(self, k, v)
+
 
 class FCS:
     stock_index : StockIndex = None
@@ -71,13 +78,74 @@ def calculate_indicator(symbol, indicator = ['risk'], setting=None, preset_close
     stockindex_copy.origin_data['pre_close'] = stockindex_copy.origin_data.close.shift(1)
     bar = Bar().update_bar(stockindex_copy.origin_data.iloc[-1,:])
 
+            
     if preset_close is not None:
         stockindex_copy.am.close_array[-1] = preset_close
         stockindex_copy.origin_data.loc[stockindex_copy.origin_data.index[-1] , 'close'] = preset_close
 
     result = return_indicator(indicator=indicator, stockindex_copy = stockindex_copy)
 
+    #检查联系日期
+    continue_date = find_continue_date(list(
+        (result[_ix]['indicator'].loc[(result[_ix]['indicator'] < result[_ix]['indicator'].iloc[-1]).squeeze()].index)
+    ))
+
+    #检查risk是否连续下降
+    result[_ix]['indicator'].index = pd.to_datetime(result[_ix]['indicator'].index)
+    for k, _continue in enumerate(continue_date) :
+        _data = result[_ix]['indicator'].loc[_continue]
+        if _data.shape[0] > 1:
+            #判断是否下降
+            _diff : pd.DataFrame
+            _diff = _data.diff() < 0
+            _diff.iloc[0] = True
+            if (~_diff).any().squeeze():
+                _data = _data[ _data.index < _diff.replace(True, value = None).first_valid_index()]
+                continue_date[k] = list(_data.index)
+
+    #计算平均日长
+    np.mean([len(i) for i in continue_date])
+    np.median([len(i) for i in continue_date])
+
+    for k, _continue in enumerate(continue_date) :
+        _data = result[_ix]['indicator'].loc[_continue]
+        _date = _data.index[0]
+
+
     return {'indicator' : result, 'bar' : bar}
+
+def find_continue_date(date):
+    import exchange_calendars as xcals
+    XSHG = xcals.get_calendar('XSHG', start='2010-12-19')
+    td = XSHG.schedule.index
+    trade_date_sse = pd.to_datetime([i for i in td])
+    records = []
+    _re = []
+
+    while len(date) > 0:
+        # _re = []
+        _date = date.pop(0)
+        _date = pd.to_datetime(_date)
+
+        #如果记录为空，记录头
+        if len(_re) == 0:
+            # if _date in trade_date_sse:
+            _re += [_date]
+        else:
+            #否则判断是否连续
+            n_day = trade_date_sse [trade_date_sse > _re[-1]][0]
+            if _date == n_day:
+                _re += [_date]
+            
+            else:
+                records += [_re]
+                _re = [_date]
+
+        if len(date) == 0:
+            records += [_re]
+
+    return records
+            
 
 def main(if_save = True, setting = None) -> Results:
     # 挨个计算 bar 和 indicator
@@ -85,19 +153,25 @@ def main(if_save = True, setting = None) -> Results:
     for _ix in list( name_2_symbol.keys()):
         result[_ix] =  calculate_indicator(name_2_symbol[_ix], setting = setting)
         result[_ix]['quantile'] = (result[_ix]['indicator'] < result[_ix]['indicator'].iloc[-1]).sum() / result[_ix]['indicator'].shape[0]
+        
+
+            
+
         print(result[_ix])
 
 
     #整合
     indicator = {k: v['indicator'].iloc[-1].squeeze() for k, v in result.items()}
+    last_indicator = {k: v['indicator'].iloc[-2].squeeze() for k, v in result.items()}
     percent = {k:v['bar'].close/v['bar'].pre_close *1 - 1  for k, v in result.items()}
     quantile = {k: v['quantile'].squeeze() for k, v in result.items()}
 
-    results = Results() ; 
-    results.indicator = indicator; 
+    results = Results() 
+    results.indicator = indicator
     results.percent = percent
     results.quantile = quantile
     results.bar = {k:v['bar'].close for k, v in result.items()}
+    results.last_indicator = last_indicator
     #保存indicator
     indicator = pd.Series(indicator)
     
