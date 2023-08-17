@@ -3,7 +3,7 @@ from strategy.option.spred import Spred
 import pandas as pd
 from data.generate_data import DataLoader
 from utils.basic import rename_dataframe, Bar
-from stock_strategy import StockIndex, stock_etf_hist_dataloader
+from strategy.stock_strategy import StockIndex, stock_etf_hist_dataloader
 from data.generate_data import DataLoader
 
 loader =  DataLoader()

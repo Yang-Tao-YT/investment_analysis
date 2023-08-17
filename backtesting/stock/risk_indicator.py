@@ -2,7 +2,7 @@ from ..stock_backtest import Backtest
 from ..statistic import Statistic
 import numpy as np
 import pandas as pd
-from stock_strategy import StockIndex
+from strategy.stock_strategy import StockIndex
 
 class RiskStrategyStatistic(Statistic):
     ma_window : int = 3

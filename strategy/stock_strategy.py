@@ -4,7 +4,7 @@ from typing import Callable, Dict, Tuple, Union, Optional
 import talib
 from data.generate_data import AkShare, Request, DataLoader
 import utils.basic as basic
-
+from utils.basic import rename_dataframe
 import config
 import os
 
@@ -636,17 +636,65 @@ class StockIndex(Indicator):
 
         return pd.DataFrame(zip(self.am.date, super()._rsi(am)))
 
-
 def stock_etf_hist_dataloader(symbol='sh515790', gateway ='dc', save_path = config.path_hist_k_data):
     '''
     读取历史k线数据'''
-    # if os.path.exists(f'{save_path}/{symbol}.csv') :
-    #     data = pd.read_csv(f'{save_path}/{symbol}.csv')
-        
-    # else:
-    #     data = AkShare().download_stock_etf_hist_k(symbol, gateway, save_path, if_save=False)
-    data = AkShare().download_stock_etf_hist_k(symbol, gateway, save_path, if_save=False)
+    max_try = 10
+
+    while max_try > 0:
+        try:
+            data = AkShare().download_stock_etf_hist_k(symbol, gateway, save_path, if_save=False)
+            break
+        except Exception as e:
+            print(e)
+            max_try -= 1
+    
+    if max_try == 0:
+        Warning('download stock k data error, obtain from local history folder')
+        data = pd.read_csv(f'{save_path}/{symbol}.csv', index_col=0)
+
+    if save_path is not None:
+        data.to_csv(f'{save_path}/{symbol}.csv')
+
     return data
+
+def return_stockindex(symbol, setting : dict = None, end_date = None):
+    """
+    下载历史数据
+    The function `return_stockindex` downloads historical data for a given stock index symbol, renames
+    the columns, filters the data based on an end date, converts the data to the format of a
+    `StockIndex` object, sets the data as the origin data of the `StockIndex` object, and updates the
+    setting of the `StockIndex` object if provided.
+    
+    Args:
+      symbol: The symbol parameter is used to specify the stock or index symbol for which you want to
+    download historical data.
+      setting (dict): The `setting` parameter is a dictionary that contains various settings for the
+    stock index. These settings can include things like the calculation method for the index, the
+    weighting scheme, or any other parameters that are specific to the stock index being analyzed.
+      end_date: The end_date parameter is used to specify the last date of the historical data that you
+    want to download. Only data up to this date will be included in the returned stockindex object.
+    
+    Returns:
+      an instance of the StockIndex class.
+    """
+    stockindex = StockIndex()
+
+    #download history k data
+    hist = stock_etf_hist_dataloader(symbol)
+    hist = rename_dataframe(hist)
+    hist['date'] = pd.to_datetime(hist['date']).dt.date
+
+    if end_date is not None:
+        hist = hist.loc[pd.to_datetime(hist.date) <= pd.to_datetime(end_date)]
+    #转换成stockindex的形式
+    stockindex.set_am(hist)
+    setattr(stockindex, 'origin_data', hist.set_index('date')) 
+    # update setting
+    if setting is not None:
+        stockindex.update_setting(setting=setting)
+
+    return stockindex
 
 def barloader(symbol):
     '''下载当前k线数据'''
@@ -657,6 +705,31 @@ def barloader(symbol):
     bar.update_bar(df)
 
     return bar
+
+def return_indicator(indicator, stockindex = None):
+    """
+    The function `return_indicator` takes a list of indicators and a stock index copy as input, and
+    returns a concatenated dataframe of the indicators.
+    
+    Args:
+      indicator: The "indicator" parameter is a list of indicators that you want to retrieve from the
+    "stockindex_copy" DataFrame.
+      stockindex_copy: The `stockindex_copy` parameter is a copy of a stock index dataset. It is
+    expected to be a pandas DataFrame object.
+    
+    Returns:
+      a concatenated DataFrame containing the specified indicators for the stock index.
+    """
+
+    if len(indicator) > 0:
+        result = {}
+        for i in indicator:
+             _temp = eval(f'stockindex.{i}().iloc[:, :]')
+             _temp = _temp.set_index(0)
+             result[i] = _temp.squeeze()
+        
+        
+        return pd.concat(result, axis = 1)
 
 if __name__ == '__main__':
     # symbol='sh510300'

@@ -293,7 +293,7 @@ if __name__ == '__main__':
     from pandas import DataFrame
 
     from utils.basic import name_2_symbol, rename_dataframe
-    from stock_strategy import StockIndex, barloader, stock_etf_hist_dataloader
+    from strategy.stock_strategy import StockIndex, barloader, stock_etf_hist_dataloader
     print('rerun')
     stockindex = StockIndex()
     hist = stock_etf_hist_dataloader('sh510300')

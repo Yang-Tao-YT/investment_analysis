@@ -5,7 +5,7 @@ import pandas as pd
 
 import config
 
-from stock_strategy import StockIndex
+from strategy.stock_strategy import StockIndex
 from utils.plot import plot_kline_volume_signal_adept
 
 

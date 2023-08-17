@@ -8,7 +8,7 @@ import pandas as pd
 import streamlit as st
 from streamlitapps.options.strategy_ import strangle, multichoice_strangle, bull_spred, bear_spred
 from utils.basic import name_2_symbol, rename_dataframe, Bar
-from stock_strategy import StockIndex, stock_etf_hist_dataloader
+from strategy.stock_strategy import StockIndex, stock_etf_hist_dataloader
 
 
 

@@ -12,7 +12,8 @@ import pandas as pd
 
 import numpy as np
 
-from stock_strategy import StockIndex, barloader, stock_etf_hist_dataloader
+from strategy.stock_strategy import return_stockindex, return_indicator
+
 
 import streamlit.components.v1 as components
 from utils.plot import plot_kline_volume_signal_adept
@@ -38,23 +39,6 @@ if 'init' not in st.session_state:
     st.session_state['plot'] = 0
     st.session_state['risk_quantile'] = 0
 
-
-
-@ st.cache_data(ttl=600)  # 👈 Added this
-def return_stockindex(symbol, setting : dict = None):
-    '''下载历史数据'''
-    stockindex = StockIndex()
-    hist = stock_etf_hist_dataloader(symbol)
-    hist = rename_dataframe(hist)
-    hist['date'] = pd.to_datetime(hist['date']).dt.date
-    #转换成stockindex的形式
-    stockindex.set_am(hist)
-    setattr(stockindex, 'origin_data', hist.set_index('date')) 
-    # update setting
-    if setting is not None:
-        stockindex.update_setting(setting=setting)
-    return stockindex
-
 @st.cache_data(ttl=600)    # 👈 Added this
 def plot_bar(x_value, value):
         bar = charts.Bar()
@@ -70,18 +54,6 @@ def plot_bar(x_value, value):
             ))
         bar = bar.render_embed()
         return bar
-
-def return_indicator(indicator):
-    if len(indicator) > 0:
-        result = {}
-        for i in indicator:
-             _temp = eval(f'stockindex_copy.{i}().iloc[:, :]')
-             _temp = _temp.set_index(0)
-             result[i] = _temp.squeeze()
-        
-        
-        return pd.concat(result, axis = 1)
-    return eval(f'stockindex_copy.{indicator[0]}().iloc[-20:, :]')
 
 def check_date(x):
     return ((pd.to_datetime(x).day_of_week == 2) and ( 21 <= pd.to_datetime(x).day)) or (pd.to_datetime(x).day == 1)
@@ -222,7 +194,7 @@ with cols[1]:
             stockindex_copy = copy.deepcopy(stockindex)
             stockindex_copy.origin_data['pre_close'] = stockindex_copy.origin_data.close.shift(1)
             bar = Bar().update_bar(stockindex_copy.origin_data.iloc[-1,:])
-            result = return_indicator(indicator=indicator)
+            result = return_indicator(indicator=indicator, stockindex=stockindex_copy)
             st.write(bar)
             st.write(result.iloc[::-1, :])
             

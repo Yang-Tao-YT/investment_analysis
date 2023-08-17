@@ -5,6 +5,7 @@ import os
 import option_strategy
 from data.generate_data import DataLoader
 from strategy.factor_cross_section import main as cross_section
+import datetime
 st.set_page_config(
 page_title="investing analysis",  #页面标题
 page_icon=":rainbow:",  #icon
@@ -17,9 +18,9 @@ import pathlib
 sys.path.append(str(pathlib.Path().absolute()).split("/src")[0] )
 
 @st.cache_data
-def calcualte_indicator(x, setting = None):
+def calcualte_indicator(x, setting = None, end_date = None):
     # 传换成st的缓存格式
-    result = cross_section(if_save=False, setting = setting)
+    result = cross_section(if_save=False, setting = setting, end_date = end_date)
     indicator = result.indicator
     bar = result.bar
     percent = result.percent
@@ -47,7 +48,10 @@ else:
     setting = {'ma_window' : window}
 
 st.write(setting)
-df = calcualte_indicator(1, setting)
+
+end_date = st.date_input('end_date', value= (pd.to_datetime('today') - pd.Timedelta(days=1)))
+
+df = calcualte_indicator(1, setting, end_date = end_date)
 st.dataframe(df.style.background_gradient(cmap = 'Blues', axis = 0, subset = (  'risk' )))
 
 
