@@ -49,7 +49,7 @@ else:
 
 st.write(setting)
 
-end_date = st.date_input('end_date', value= (pd.to_datetime('today') - pd.Timedelta(days=1)))
+end_date = st.date_input('end_date', value= pd.to_datetime('today'))
 
 df = calcualte_indicator(1, setting, end_date = end_date)
 st.dataframe(df.style.background_gradient(cmap = 'Blues', axis = 0, subset = (  'risk' )))

@@ -1,9 +1,36 @@
-import streamlit as st
 import pandas as pd
+import streamlit as st
+
+from strategy.option.spred import Spred
 from strategy.option.宽跨 import StrangleOption
 from streamlitapps.apps_utils import display_returns_scale
+from streamlitapps.options.account_record import return_account
 from utils.calculate import calculate_mergin
-from strategy.option.spred import  Spred
+from scipy import optimize
+
+class OptionAnalysisRecored:
+    risk_indicators : pd.DataFrame
+    contracts : pd.DataFrame
+
+    def __init__(self, risk_indicators = None, contracts = None) -> None:
+        self.risk_indicators = risk_indicators
+        self.contracts = contracts
+        pass
+
+def calculate_portfolio_risk_diff(account_amount, combine_margin, risk_indicators, account):
+    _contracts_amount = account_amount / combine_margin /10000
+    portfolio_risk_ = round(risk_indicators * _contracts_amount * 10000)
+    portfolio_risk_ = portfolio_risk_.to_frame('新交易').join(account.account_greek().to_frame('原仓位'))
+    portfolio_risk_['增加后'] = portfolio_risk_['新交易'] + portfolio_risk_['原仓位']
+    return portfolio_risk_
+
+
+def solve_account_amount_for_ner_indi(combine_margin, risk_indicators, account):
+    '''netural risk'''
+    def test(x, ):
+        calculate_portfolio_risk_diff(x, combine_margin, risk_indicators, account)
+        return 
+    return optimize.root(test, 3).x
 
 def strangle(data, bar, price, contracts_amount, account_amount, fees = 0.0003):
     cols = st.columns([1,1])
@@ -55,18 +82,24 @@ def strangle(data, bar, price, contracts_amount, account_amount, fees = 0.0003):
         st.dataframe(risk_indicators)
 
         st.info('按金额')
+        account = return_account()
+
         _contracts_amount = account_amount / combine_margin /10000
+        portfolio_risk_ = calculate_portfolio_risk_diff(account_amount, combine_margin, risk_indicators, account)
+
+        solve_account_amount_for_ner_indi(combine_margin, risk_indicators, account)
         st.info(f'收益率为{returns * 100} %')
         st.info(f'收益为{round(returns * account_amount / 10000, 3)} 万')
         st.info(f'手数为{round(_contracts_amount)}')
-        st.dataframe(round(risk_indicators * _contracts_amount * 10000))
+
+        st.dataframe(portfolio_risk_)
 
         if contracts_amount != 0:
             st.info(f'收益为{round((contracts["最新价"].sum() - fees * 2) * contracts_amount, 3)} 万')
             st.info(f'使用保证金{round(combine_margin * contracts_amount, 3)} 万')
         
 
-    return calls, puts
+    return OptionAnalysisRecored(risk_indicators=risk_indicators, contracts=contracts)
 
 def multichoice_strangle(data, price, contracts_amount, account_amount, fees = 0.0003):
         calls = data.loc[data.名称.str.contains('购')].sort_values('行权价')
@@ -134,6 +167,7 @@ def multichoice_strangle(data, price, contracts_amount, account_amount, fees = 0
         st.dataframe(round(risk_indicators * _contracts_amount * 10000))     
         st.dataframe(risk_indicators)
 
+        return OptionAnalysisRecored(risk_indicators=risk_indicators, contracts=contracts)
 
 def bull_spred(price, data, contracts_amount =  0, fees = 0.0003, account_amount = 0):
         
@@ -248,6 +282,8 @@ def bull_spred(price, data, contracts_amount =  0, fees = 0.0003, account_amount
             st.info(f'收益为{round(returns * margin  * contracts_amount, 3)} 万')
             st.info(f'使用保证金{round(margin * contracts_amount, 3)} 万')
             st.write(risk_indicators * 10000 * contracts_amount)
+
+    return OptionAnalysisRecored(risk_indicators=risk_indicators, contracts=contracts)
 
 def bear_spred(price, data, contracts_amount =  0, fees = 0.00018, key = 'bear', account_amount = 0):
         
@@ -373,3 +409,5 @@ def bear_spred(price, data, contracts_amount =  0, fees = 0.00018, key = 'bear',
             st.info(f'收益为{round(returns * margin  * contracts_amount, 3)} 万')
             st.info(f'使用保证金{round(margin * contracts_amount, 3)} 万')
             st.write(risk_indicators * 10000 * contracts_amount)
+
+    return OptionAnalysisRecored(risk_indicators=risk_indicators, contracts=contracts)

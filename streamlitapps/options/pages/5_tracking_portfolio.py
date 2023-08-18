@@ -6,13 +6,15 @@ import option_strategy
 from data.generate_data import DataLoader
 from utils.basic import rename_dataframe, Bar
 from strategy.stock_strategy import StockIndex, stock_etf_hist_dataloader
-
+from strategy.stock_strategy import return_stockindex, return_indicator
 st.set_page_config(
 page_title="investing analysis",  #页面标题
 # page_icon=":rainbow:",  #icon
 layout="wide", #页面布局
 initial_sidebar_state="auto" #侧边栏
 )
+
+
 
 if 'loader' not in st.session_state:
     st.session_state['loader'] = loader =  DataLoader()
@@ -26,20 +28,6 @@ cols = st.columns([1,1,1])
 with cols[0]:
     st.title('tracking portfolio') ; 
     if st.button('refresh'):pass
-
-def return_stockindex(symbol, setting : dict = None):
-    '''下载历史数据'''
-    stockindex = StockIndex()
-    hist = stock_etf_hist_dataloader(symbol)
-    hist = rename_dataframe(hist)
-    hist['date'] = pd.to_datetime(hist['date']).dt.date
-    #转换成stockindex的形式
-    stockindex.set_am(hist)
-    setattr(stockindex, 'origin_data', hist.set_index('date')) 
-    # update setting
-    if setting is not None:
-        stockindex.update_setting(setting=setting)
-    return stockindex
 
 def dataframe_display(df):
     st.dataframe(df,
@@ -117,8 +105,14 @@ if os.path.exists('position.csv') or os.path.exists('huataiposition.csv'):
     # filters2 = 9
     if filters2 is not None:
         dataframe = dataframe.loc[dataframe.合约名称.str.contains(f'{filters2}月')]
-        
 
+    cols2  = st.columns(3)
+    with cols2[0]:
+        contract_split = st.checkbox('按合约')
+    with cols2[1]:
+        type_split = st.checkbox('按类型')
+    with cols2[2]:
+        if_edit = st.checkbox('edit')
     # price
     data = loader.current_em()
     hs300 = loader.current_hs300sz_em()
@@ -127,7 +121,6 @@ if os.path.exists('position.csv') or os.path.exists('huataiposition.csv'):
     data = data.set_index('代码')
     data = data.apply(pd.to_numeric,args=['ignore'])
 
-    
     # greek
     greek = loader.current_risk_em()
     # hs300 = loader.current_hs300risk_sz_em()
@@ -138,13 +131,6 @@ if os.path.exists('position.csv') or os.path.exists('huataiposition.csv'):
 
     trad.update_bar(data)
     trad.update_greek(greek)
-    cols2  = st.columns(3)
-    with cols2[0]:
-        contract_split = st.checkbox('按合约')
-    with cols2[1]:
-        type_split = st.checkbox('按类型')
-    with cols2[2]:
-        if_edit = st.checkbox('edit')
     
     if if_edit:
         dataframe = st.data_editor(dataframe)
@@ -165,16 +151,6 @@ if os.path.exists('position.csv') or os.path.exists('huataiposition.csv'):
     test.loc[test.合约名称.str.contains('500ETF')| test.合约名称.str.contains('510500') , '行权价'] = test.loc[test.合约名称.str.contains('500ETF')| test.合约名称.str.contains('510500') , '行权价'] / zz500_price - 1
     trad.position.insert(4, '比例', list((test['行权价'] * 100).values) + [None]) 
     trad.position.insert(4, '比例绝对值', list(abs(test['行权价'] * 100).values) + [None]) 
-
-    # from st_aggrid import AgGrid, GridOptionsBuilder
-    # from st_aggrid.shared import  ColumnsAutoSizeMode
-
-    # dfssss=AgGrid(trad.position, 
-    #                 # gridOptions=grid_options,
-    #             #   editable =True, 
-    #             #   width = 1, 
-    #                 columns_auto_size_mode=ColumnsAutoSizeMode.FIT_ALL_COLUMNS_TO_VIEW
-    #                 )
 
     if contract_split:
         #按不同合约标的展示

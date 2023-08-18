@@ -71,7 +71,10 @@ def calculate_indicator(symbol,
                         preset_close = None, 
                         end_date = None,
                         if_analysis_down_risk = False,
-                        if_analysis_risk_after_first_comback = False):
+                        if_analysis_risk_after_first_comeback = False,
+                        if_return_stockindex = False):
+    
+    
     stockindex = return_stockindex(symbol, setting=setting, end_date = end_date)
     stockindex_copy = copy.deepcopy(stockindex)
     stockindex_copy.origin_data['pre_close'] = stockindex_copy.origin_data.close.shift(1)
@@ -83,15 +86,20 @@ def calculate_indicator(symbol,
         stockindex_copy.origin_data.loc[stockindex_copy.origin_data.index[-1] , 'close'] = preset_close
 
     result = return_indicator(indicator=indicator, stockindex = stockindex_copy)
+    _return = {'indicator' : result, 'bar' : bar}
+
+
 
     if if_analysis_down_risk:
-        down_risk_analysis = find_down_risk_at_current_risk(result, stockindex_copy.origin_data['close'])
+        down_risk_analysis = find_down_risk_at_current_risk(result.copy(), stockindex_copy.origin_data['close'])
 
-    if if_analysis_risk_after_first_comback:
-        analysis = find_down_risk_after_first_comback(result, stockindex_copy.origin_data['close'])
-    # up_risk_analysis = find_up_risk_at_current_risk(result, stockindex_copy.origin_data['close'])
+    if if_analysis_risk_after_first_comeback:
+        analysis = find_down_risk_after_first_comeback(result.copy(), stockindex_copy.origin_data['close'])
+        _return['comeback'] = analysis
 
-    return {'indicator' : result, 'bar' : bar}
+    if if_return_stockindex:
+        _return['stockindex'] = stockindex_copy
+    return _return
 
 def find_risk_trend(date, indicator):
     records = [date]
@@ -180,7 +188,7 @@ def find_down_risk_at_current_risk(indicator, close):
             '未来5日中位数' : _return_p_5.median()})
 
 
-def find_down_risk_after_first_comback(indicator, close, compare_indicator = None, special_returns = None):
+def find_down_risk_after_first_comeback(indicator, close, compare_indicator = None, special_returns = None):
     indicator.index = pd.to_datetime(indicator.index)
     close.index = pd.to_datetime(close.index)
 
@@ -191,32 +199,36 @@ def find_down_risk_after_first_comback(indicator, close, compare_indicator = Non
     result = indicator.copy()
     # 计算第二天变化值
     indicator['t+1'] = indicator.shift(-1)
+    indicator['t+2'] = indicator['risk'].shift(-2)
     indicator['diff+1'] = indicator['t+1'] - indicator['risk']
 
     # 找出比目标indicator低同时第二天反弹的日期
-    _date = indicator.loc[(indicator['risk'] < 15) & (indicator['diff+1'] > 0)].index
+    _comb = indicator.loc[(indicator['risk'] < compare_indicator * 0.9) & (indicator['diff+1'] > 0) &  (indicator['t+1'] < compare_indicator * 1.1)]
+    _date = _comb.index
 
+    # # 计算斜率
+    # from scipy.stats import linregress
+    # slope, intercept, r_value, p_value, std_err = linregress(x, y)
     # 计算收益
     returns = close.pct_change().to_frame('returns')
     for _t in range(1,7):
         returns[f't+{_t}'] = returns['returns'].shift(-_t)
 
+    returns['5D'] = close.shift(-5) / close- 1
+    records = {}
+    
     # 找出收益
     res_returns = returns.loc[_date]
 
 
-    #计算t+1收益
-    mean_1 = res_returns['t+1'].mean()
-    median_1 =res_returns['t+1'].median()
+    #计算t+n收益
+    for _t in range(1,7):
+        records[f't+{_t}收益'] = res_returns[f't+{_t}'].mean()
+        records[f't+{_t}收益中位数'] = res_returns[f't+{_t}'].median()
 
-    #计算t+2收益
-    mean_2 = res_returns['t+2'].mean()
-    median_2 = res_returns['t+2'].median()
-
-    records = {'t+1收益' : mean_1,
-            't+1收益中位数' : median_1,
-            't+2收益' : mean_2,
-            't+2收益中位数' : median_2,}
+    records[f'5D收益'] = res_returns['5D'].mean()
+    records[f'5D收益中位数'] = res_returns['5D'].median()
+    
     if special_returns is not None:
         _sr_indicator = indicator.loc[_date].join(res_returns, lsuffix = '_ind').loc[res_returns['t+1'] < 0.003]
         records['特殊t+1收益率下t+2收益'] = _sr_indicator['t+2'].mean()

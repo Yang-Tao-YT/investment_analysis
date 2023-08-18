@@ -9,8 +9,8 @@ import streamlit as st
 from streamlitapps.options.strategy_ import strangle, multichoice_strangle, bull_spred, bear_spred
 from utils.basic import name_2_symbol, rename_dataframe, Bar
 from strategy.stock_strategy import StockIndex, stock_etf_hist_dataloader
-
-
+from streamlitapps.options.account_record import return_account
+from strategy.stock_strategy import return_stockindex
 
 st.set_page_config(
 page_title="investing analysis",  #页面标题
@@ -27,20 +27,6 @@ def obtain_option_data(hax):
     greek = loader.current_risk_em()
 
     return data, hs300, greek
-# @ st.cache_data(ttl=600)  # 👈 Added this
-def return_stockindex(symbol, setting : dict = None):
-    '''下载历史数据'''
-    stockindex = StockIndex()
-    hist = stock_etf_hist_dataloader(symbol)
-    hist = rename_dataframe(hist)
-    hist['date'] = pd.to_datetime(hist['date']).dt.date
-    #转换成stockindex的形式
-    stockindex.set_am(hist)
-    setattr(stockindex, 'origin_data', hist.set_index('date')) 
-    # update setting
-    if setting is not None:
-        stockindex.update_setting(setting=setting)
-    return stockindex
 
 def fun_tool(key1,index=0):
     mulfun_tabs1 = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差', '看跌价差', ], key=f'mulfun0{key1}', index=index)
@@ -58,6 +44,36 @@ def fun_tool(key1,index=0):
     if mulfun_tabs1 ==  '看跌价差':
         #读取剩余日
         bear_spred(price, data, contracts_amount, fees, account_amount=account_amount)
+
+def tabsey(tabs):
+    if tabs ==  '宽跨':
+        result = strangle(data, bar, price, contracts_amount, account_amount, fees)
+
+    if tabs ==  '宽跨定制':
+        '''多个选择'''
+        multichoice_strangle(data, price, contracts_amount, account_amount, fees)
+
+    if tabs ==  '看涨价差':
+        #读取剩余日
+        bull_spred(price, data, contracts_amount, fees, account_amount=account_amount)
+
+    if tabs ==  '看跌价差':
+        #读取剩余日
+        bear_spred(price, data, contracts_amount, fees, account_amount=account_amount)
+
+    if tabs ==  '多个功能':
+        mulfun = st.columns(2)
+        with mulfun[0]:
+            fun_tool(0)
+
+
+        with mulfun[1]:
+            fun_tool(1,2)
+
+    # if tabs != '多个功能':
+        # account = return_account()
+        # account.account_greek()
+        # result.risk_indicators
 
 if 'loader' not in st.session_state:
     trad = option_strategy.Trading()
@@ -117,34 +133,10 @@ with set_cols[3]:
 
 data = data.loc[data['剩余日'] ==  days].copy()
 
-
-
-
-
 tabs = st.selectbox('类型', ['宽跨' , '宽跨定制', '看涨价差', '看跌价差', '多个功能'], index=0)
 
 st.write('-' * 20)
-if tabs ==  '宽跨':
-    strangle(data, bar, price, contracts_amount, account_amount, fees)
-
-if tabs ==  '宽跨定制':
-    '''多个选择'''
-    multichoice_strangle(data, price, contracts_amount, account_amount, fees)
-
-if tabs ==  '看涨价差':
-    #读取剩余日
-    bull_spred(price, data, contracts_amount, fees, account_amount=account_amount)
-
-if tabs ==  '看跌价差':
-    #读取剩余日
-    bear_spred(price, data, contracts_amount, fees, account_amount=account_amount)
-
-if tabs ==  '多个功能':
-    mulfun = st.columns(2)
-    with mulfun[0]:
-        fun_tool(0)
 
 
-    with mulfun[1]:
-        fun_tool(1,2)
 
+tabsey(tabs)

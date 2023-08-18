@@ -13,6 +13,7 @@ import pandas as pd
 import numpy as np
 
 from strategy.stock_strategy import return_stockindex, return_indicator
+from strategy.factor_cross_section import calculate_indicator
 
 
 import streamlit.components.v1 as components
@@ -61,7 +62,7 @@ def check_date(x):
 def history_return_hist(days):
         df : pd.DataFrame
         pct : pd.Series
-        df = stockindex_copy.origin_data.close.copy()
+        df = stockindex.origin_data.close.copy()
 
         df.index  = pd.to_datetime(df.index)
         df = df.loc[pd.to_datetime('2010-06-01'): ]
@@ -178,7 +179,8 @@ with cols[0]:
 
 with cols[1]:
     #select window
-    window = st.number_input('window' , step=1,value=21)
+    window = st.number_input('window' , step=1,value=0)
+    if_comeback = st.checkbox('反弹趋势', value=True)
     if window != 0:
         setting = {'ma_window' : window}
     else:
@@ -188,16 +190,22 @@ with cols[1]:
     with placeholder.container():
         
         _columns = st.columns(2)
-
+        end_date = st.date_input('end_date', value= pd.to_datetime('today') - pd.Timedelta(days = 1))
         with _columns[0]:
-            stockindex = return_stockindex(symbol, setting=setting)
-            stockindex_copy = copy.deepcopy(stockindex)
-            stockindex_copy.origin_data['pre_close'] = stockindex_copy.origin_data.close.shift(1)
-            bar = Bar().update_bar(stockindex_copy.origin_data.iloc[-1,:])
-            result = return_indicator(indicator=indicator, stockindex=stockindex_copy)
+            _result = calculate_indicator(symbol, 
+                                          setting=setting, 
+                                          if_return_stockindex=True, 
+                                          if_analysis_risk_after_first_comeback=if_comeback,
+                                          end_date = end_date)
+            bar = _result['bar']
+            result = _result['indicator']
             st.write(bar)
             st.write(result.iloc[::-1, :])
-            
+            stockindex = _result['stockindex']
+
+        if if_comeback:
+            with cols[0]:
+                st.write(_result['comeback'])
         with _columns[1]:
             price = pd.Series(range(int(bar.close * 10 * 0.87),int(bar.close * 10 * 1.13)))/10
             price.index = price
@@ -241,7 +249,7 @@ with tabs[2]:
 if st.session_state['plot']:
 # if 1:
         start = st.date_input('start', datetime.date(2023,1,1))
-        end = st.date_input('end', datetime.date(2023,12,31))
+        end = st.date_input('end', pd.to_datetime('today'))
 
         
         st.write(stockindex.origin_data.loc[:end, 'close'][-1]/ stockindex.origin_data.loc[start:, 'open'][0] - 1)
