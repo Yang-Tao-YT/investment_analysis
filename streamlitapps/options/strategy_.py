@@ -28,9 +28,9 @@ def calculate_portfolio_risk_diff(account_amount, combine_margin, risk_indicator
 def solve_account_amount_for_ner_indi(combine_margin, risk_indicators, account):
     '''netural risk'''
     def test(x, ):
-        calculate_portfolio_risk_diff(x, combine_margin, risk_indicators, account)
-        return 
-    return optimize.root(test, 3).x
+        _diff = calculate_portfolio_risk_diff(x, combine_margin, risk_indicators, account)
+        return _diff.loc['Delta', '增加后']
+    return float(optimize.root(test, 3).x)
 
 def strangle(data, bar, price, contracts_amount, account_amount, fees = 0.0003):
     cols = st.columns([1,1])
@@ -87,11 +87,12 @@ def strangle(data, bar, price, contracts_amount, account_amount, fees = 0.0003):
         _contracts_amount = account_amount / combine_margin /10000
         portfolio_risk_ = calculate_portfolio_risk_diff(account_amount, combine_margin, risk_indicators, account)
 
-        solve_account_amount_for_ner_indi(combine_margin, risk_indicators, account)
+        account_amount_for_ner_indi = solve_account_amount_for_ner_indi(combine_margin, risk_indicators, account)
         st.info(f'收益率为{returns * 100} %')
         st.info(f'收益为{round(returns * account_amount / 10000, 3)} 万')
         st.info(f'手数为{round(_contracts_amount)}')
-
+        st.info(f'delta中性需要资金为{round(account_amount_for_ner_indi)}')
+        st.info(f'delta中性需要手数为{round(account_amount_for_ner_indi / combine_margin /10000)}')
         st.dataframe(portfolio_risk_)
 
         if contracts_amount != 0:
@@ -155,15 +156,19 @@ def multichoice_strangle(data, price, contracts_amount, account_amount, fees = 0
 
 
         contracts_amount = st.number_input('手数', value = 0, key='123')
+
+        #delta中性
+        portfolio_risk_ = calculate_portfolio_risk_diff(account_amount, combine_margin, risk_indicators, account)
+
         if contracts_amount != 0:
             st.info(f'收益为{round((contracts["最新价"].dot(contracts["pecentage"]) - fees * 2) * contracts_amount, 3)} 万')
             st.info(f'使用保证金{round(combine_margin * contracts_amount, 3)} 万')
 
         st.info('按金额')
 
-        st.info(f'手数为{round(_contracts_amount)}')
         st.info(f'收益率为{returns * 100} %')
         st.info(f'收益为{round(returns * account_amount / 10000, 3)} 万')
+        st.info(f'手数为{round(_contracts_amount)}')
         st.dataframe(round(risk_indicators * _contracts_amount * 10000))     
         st.dataframe(risk_indicators)
 
