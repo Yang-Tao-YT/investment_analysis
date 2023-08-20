@@ -8,7 +8,6 @@ import config
 from strategy.stock_strategy import StockIndex
 from utils.plot import plot_kline_volume_signal_adept
 
-
 def calculate_risk(data, setting):
         tool = StockIndex()
         tool.set_am(data)

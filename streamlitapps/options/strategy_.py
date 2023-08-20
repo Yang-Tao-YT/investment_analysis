@@ -24,7 +24,6 @@ def calculate_portfolio_risk_diff(account_amount, combine_margin, risk_indicator
     portfolio_risk_['增加后'] = portfolio_risk_['新交易'] + portfolio_risk_['原仓位']
     return portfolio_risk_
 
-
 def solve_account_amount_for_ner_indi(combine_margin, risk_indicators, account):
     '''netural risk'''
     def test(x, ):
@@ -158,7 +157,10 @@ def multichoice_strangle(data, price, contracts_amount, account_amount, fees = 0
         contracts_amount = st.number_input('手数', value = 0, key='123')
 
         #delta中性
+        account = return_account()
         portfolio_risk_ = calculate_portfolio_risk_diff(account_amount, combine_margin, risk_indicators, account)
+
+        account_amount_for_ner_indi = solve_account_amount_for_ner_indi(combine_margin, risk_indicators, account)
 
         if contracts_amount != 0:
             st.info(f'收益为{round((contracts["最新价"].dot(contracts["pecentage"]) - fees * 2) * contracts_amount, 3)} 万')
@@ -169,7 +171,9 @@ def multichoice_strangle(data, price, contracts_amount, account_amount, fees = 0
         st.info(f'收益率为{returns * 100} %')
         st.info(f'收益为{round(returns * account_amount / 10000, 3)} 万')
         st.info(f'手数为{round(_contracts_amount)}')
-        st.dataframe(round(risk_indicators * _contracts_amount * 10000))     
+        st.info(f'delta中性需要资金为{round(account_amount_for_ner_indi)}')
+        st.info(f'delta中性需要手数为{round(account_amount_for_ner_indi / combine_margin /10000)}')
+        st.dataframe(portfolio_risk_)     
         st.dataframe(risk_indicators)
 
         return OptionAnalysisRecored(risk_indicators=risk_indicators, contracts=contracts)
@@ -274,13 +278,22 @@ def bull_spred(price, data, contracts_amount =  0, fees = 0.0003, account_amount
 
             st.write(stats)
 
+        #delta中性
+        account = return_account()
+        portfolio_risk_ = calculate_portfolio_risk_diff(account_amount, margin, risk_indicators, account)
+
+        account_amount_for_ner_indi = solve_account_amount_for_ner_indi(margin, risk_indicators, account)
+
+
         if account_amount != 0:
             _contracts_amount = account_amount / margin / 10000
             st.info('按金额')
             st.info(f'收益为{round(returns * margin  * _contracts_amount, 3)} 万')
             st.info(f'使用保证金{round(margin * _contracts_amount, 3)} 万')
             st.info(f'手数为{_contracts_amount}')
-            st.write(risk_indicators * 10000 * _contracts_amount)
+            st.info(f'delta中性需要资金为{round(account_amount_for_ner_indi)}')
+            st.info(f'delta中性需要手数为{round(account_amount_for_ner_indi / margin /10000)}')
+            st.write(portfolio_risk_)
 
         if contracts_amount != 0:
             st.info('按手数')
@@ -401,13 +414,22 @@ def bear_spred(price, data, contracts_amount =  0, fees = 0.00018, key = 'bear',
 
             st.write(stats)
 
+        #delta中性
+        account = return_account()
+        portfolio_risk_ = calculate_portfolio_risk_diff(account_amount, margin, risk_indicators, account)
+
+        account_amount_for_ner_indi = solve_account_amount_for_ner_indi(margin, risk_indicators, account)
+
         if account_amount != 0:
             _contracts_amount = account_amount / margin / 10000
             st.info('按金额')
             st.info(f'收益为{round(returns * margin  * _contracts_amount, 3)} 万')
             st.info(f'使用保证金{round(margin * _contracts_amount, 3)} 万')
             st.info(f'手数为{_contracts_amount}')
-            st.write(risk_indicators * 10000 * _contracts_amount)
+            st.info(f'delta中性需要资金为{round(account_amount_for_ner_indi)}')
+            st.info(f'delta中性需要手数为{round(account_amount_for_ner_indi / margin /10000)}')
+            st.write(portfolio_risk_)
+
 
         if contracts_amount != 0:
             st.info('按手数')

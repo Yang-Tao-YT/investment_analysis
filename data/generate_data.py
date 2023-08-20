@@ -11,9 +11,6 @@ import requests
 import config
 from utils.basic import rename_dataframe
 
-
-
-
 def trying (func):
     
     def new_fun(*args, **kwargs):
@@ -579,12 +576,11 @@ class Request:
         data.loc[data['index'] == '日期', 'value'] = pd.to_datetime(data.loc[data['index'] == '日期', 'value']).dt.date
         return data.loc[data['index'] != 'drop']
 
-
 class DataLoader(Request,AkShare):
 
     def __init__(self,):
-            super().__init__()
-            super(Request, self).__init__()
+        super().__init__()
+        super(Request, self).__init__()
 
 def download_etf():
     aks = AkShare()
