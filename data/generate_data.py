@@ -400,6 +400,28 @@ class AkShare:
         stock_zh_index_daily_df = ak.stock_zh_index_daily(symbol="sh000300")
         print(stock_zh_index_daily_df)
 
+    def stock_etf_hist_dataloader(self, symbol='sh515790', gateway ='dc', save_path = config.path_hist_k_data):
+        '''
+        读取历史k线数据'''
+        max_try = 10
+
+        while max_try > 0:
+            try:
+                data = self.download_stock_etf_hist_k(symbol, gateway, save_path, if_save=False)
+                break
+            except Exception as e:
+                print(e)
+                max_try -= 1
+        
+        if max_try == 0:
+            Warning('download stock k data error, obtain from local history folder')
+            data = pd.read_csv(f'{save_path}/{symbol}.csv', index_col=0)
+
+        if save_path is not None:
+            data.to_csv(f'{save_path}/{symbol}.csv')
+
+        return data
+    
 class YFinance:
 
     def __init__(self) -> None:

@@ -27,6 +27,11 @@ def snowball_valuation(sample_path: pd.Series | np.ndarray,
     coupon_rate: 票息率
     risk_free_rate: 无风险利率
     """
+    if isinstance(sample_path, pd.DataFrame):
+        if '日期' in sample_path.columns:
+            sample_path.index = sample_path['日期']
+        sample_path = sample_path.rename(columns={'收盘':'close'})['close']
+        
     datetime_series = sample_path.index
     if isinstance(datetime_series[0], ql.Date):
         pass

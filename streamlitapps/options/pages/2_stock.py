@@ -272,7 +272,7 @@ if st.session_state['plot']:
 
 
 if rerun:
-    return_stockindex.clear()
+    # return_stockindex.clear()
     st.experimental_rerun()
 
 if st.button('refresh'):

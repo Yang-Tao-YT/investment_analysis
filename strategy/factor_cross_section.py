@@ -120,8 +120,12 @@ def find_down_risk_at_current_risk(indicator, close):
     
     #找进口
     indicator['t+1'] = indicator.shift(-1)
+    indicator['t-1'] = indicator['risk'].shift(1)
     indicator['t+1day'] = list(pd.Series(indicator.index).shift(-1))
-    enter = indicator.loc[(indicator['risk'] >= indicator['risk'][-1]) & (indicator['t+1'] < indicator['risk'][-1])]
+    enter = indicator.loc[((indicator['risk'] >= indicator['risk'][-1]) & (indicator['t+1'] < indicator['risk'][-1]))
+                          |
+                          ((indicator['risk'] < indicator['risk'][-1]))
+                          ]
 
     indicator.loc[(indicator['risk'] < indicator['risk'][-1])]
     #根据近值选择
@@ -131,7 +135,8 @@ def find_down_risk_at_current_risk(indicator, close):
         elif df['close'] == 'risk':
             return df.name
 
-    enter = list(enter.join((enter[['risk', 't+1']] - indicator['risk'][-1]).abs().idxmin(axis = 1).to_frame('close')).apply(chose, axis = 1))
+    enter_ = enter.join((enter[['risk', 't+1']] - indicator['risk'][-1]).abs().idxmin(axis = 1).to_frame('close'))
+    enter = list(enter_.apply(chose, axis = 1))
 
     continue_date = []
     for _enter in enter:
@@ -147,14 +152,16 @@ def find_down_risk_at_current_risk(indicator, close):
     #计算t+1收益
     returns_1 = close.pct_change().shift(-1)
     returns_1.index = pd.to_datetime(returns_1.index)
+
+    indicator.loc[enter]
     _returns_1 = pd.Series()
     for k, _continue in enumerate(continue_date):
-        close.loc[_continue]
         _data = result.loc[_continue]
         _date = _data.index[0]
         returns = returns_1.loc[pd.to_datetime(_date)]
         _returns_1.loc[_date] = returns
 
+    _returns_1.to_frame('return').join(indicator['risk'])
 
     #计算t收益
     returns_ = close.pct_change()
@@ -273,7 +280,12 @@ def main(if_save = True, setting = None, end_date = None) -> Results:
     # 挨个计算 bar 和 indicator
     result = {}
     for _ix in list( name_2_symbol.keys()):
-        result[_ix] =  calculate_indicator(name_2_symbol[_ix], setting = setting, end_date = end_date)
+        result[_ix] =  calculate_indicator(
+                                name_2_symbol[_ix], 
+                                setting = setting, 
+                                end_date = end_date, 
+                                if_analysis_down_risk= True,
+                                           )
         result[_ix]['quantile'] = (result[_ix]['indicator'] < result[_ix]['indicator'].iloc[-1]).sum() / result[_ix]['indicator'].shape[0]
         
         print(result[_ix])
