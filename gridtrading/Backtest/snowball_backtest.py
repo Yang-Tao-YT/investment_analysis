@@ -8,12 +8,13 @@ import numpy as np
 import pandas as pd
 import QuantLib as ql
 from ..Pricing.quantlib_pricing import last_trade_date_month
-
+import tqdm
+import os
 
 def snowball_valuation(sample_path: pd.Series | np.ndarray,
                        ko: float = 1.03,
                        ko_lock: int = 0,
-                       ki: float = 0.85,
+                       ki: float = 0.80,
                        principal: int = 1000000,
                        coupon_rate: float = 0.2,
                        risk_free_rate: float = 0.03) -> list[float, int | None, int | None]:
@@ -92,13 +93,15 @@ def snowball_backtest(price_series: pd.DataFrame | pd.Series,
     # 滚动回测
     res_dim0 = len(price_series) - window + 1
     result_values = list()
-    for i in range(0, res_dim0, step):
+    for i in tqdm.tqdm( range(0, res_dim0, step)):
         current_path = price_series[i:i + window].squeeze()
         result_values.append(snowball_valuation(sample_path=current_path, **kwargs))
 
-    return pd.DataFrame(result_values,
+    result = pd.DataFrame(result_values,
                         index=price_series.index[np.arange(0, res_dim0, step)],
                         columns=["Profit", "KO Date", "KI Date"])
+    
+    return result
 
 
 if __name__ == "__main__":

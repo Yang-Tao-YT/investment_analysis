@@ -49,15 +49,18 @@ else:
 
 st.write(setting)
 
-end_date = st.date_input('end_date', value= pd.to_datetime('today'))
+end_date = st.date_input('end_date', value= pd.to_datetime('today') 
+                         - pd.Timedelta(days = 1)
+                         )
+if __name__ == '__main__':
 
-df = calcualte_indicator(1, setting, end_date = end_date)
-st.dataframe(df.style.background_gradient(cmap = 'Blues', axis = 0, subset = (  'risk' )))
+    df = calcualte_indicator(1, setting, end_date = end_date)
+    st.dataframe(df.style.background_gradient(cmap = 'Blues', axis = 0, subset = (  'risk' )))
 
 
 
-if st.sidebar.button('run'):
-    st.cache_data.clear()
-    st.session_state.clear()
-    
-    st.experimental_rerun()
+    if st.sidebar.button('run'):
+        st.cache_data.clear()
+        st.session_state.clear()
+        
+        st.experimental_rerun()

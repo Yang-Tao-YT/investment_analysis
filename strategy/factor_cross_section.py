@@ -3,7 +3,7 @@ import pandas as pd
 from utils.basic import name_2_symbol, rename_dataframe, Bar, send_to
 from strategy.stock_strategy import StockIndex, return_stockindex, return_indicator
 import numpy as np
-
+from concurrent.futures import ProcessPoolExecutor
 class Results:
     indicator = None
     bar = None
@@ -104,7 +104,14 @@ def calculate_indicator(symbol,
 def find_risk_trend(date, indicator):
     records = [date]
     now = indicator.loc[date].squeeze()
-    _indicator = indicator.loc[indicator.index > date ].squeeze()
+    _indicator = indicator.loc[indicator.index > date ]
+
+    if isinstance(_indicator, pd.DataFrame):
+        _indicator = _indicator.squeeze()
+
+    if len(_indicator) < 2:
+        return records
+
     for _indi in _indicator.index:
         if _indicator[_indi] > now:
             break
@@ -123,11 +130,12 @@ def find_down_risk_at_current_risk(indicator, close):
     indicator['t-1'] = indicator['risk'].shift(1)
     indicator['t+1day'] = list(pd.Series(indicator.index).shift(-1))
     enter = indicator.loc[((indicator['risk'] >= indicator['risk'][-1]) & (indicator['t+1'] < indicator['risk'][-1]))
-                          |
-                          ((indicator['risk'] < indicator['risk'][-1]))
+                        #   |
+                        #   ((indicator['risk'] < indicator['risk'][-1]))
                           ]
-
-    indicator.loc[(indicator['risk'] < indicator['risk'][-1])]
+    # based on range
+    # enter = indicator.loc[ (indicator['risk'] < indicator['risk'][-1] * 1.2)
+    #                       ]
     #根据近值选择
     def chose(df):
         if df['close'] == 't+1':
@@ -136,7 +144,7 @@ def find_down_risk_at_current_risk(indicator, close):
             return df.name
 
     enter_ = enter.join((enter[['risk', 't+1']] - indicator['risk'][-1]).abs().idxmin(axis = 1).to_frame('close'))
-    enter = list(enter_.apply(chose, axis = 1))
+    enter = list(pd.unique(list(enter_.apply(chose, axis = 1))))
 
     continue_date = []
     for _enter in enter:
@@ -149,30 +157,14 @@ def find_down_risk_at_current_risk(indicator, close):
     #计算次数
     count = len(continue_date)
 
-    #计算t+1收益
-    returns_1 = close.pct_change().shift(-1)
-    returns_1.index = pd.to_datetime(returns_1.index)
+    #计算t+n收益
+    returns = close.pct_change().to_frame('returns')
+    for _t in range(1,7):
+        returns[f't+{_t}'] = returns['returns'].shift(-_t)
 
-    indicator.loc[enter]
-    _returns_1 = pd.Series()
-    for k, _continue in enumerate(continue_date):
-        _data = result.loc[_continue]
-        _date = _data.index[0]
-        returns = returns_1.loc[pd.to_datetime(_date)]
-        _returns_1.loc[_date] = returns
-
-    _returns_1.to_frame('return').join(indicator['risk'])
-
-    #计算t收益
-    returns_ = close.pct_change()
-    returns_.index = pd.to_datetime(returns_.index)
-    _returns_ = pd.Series()
-    for k, _continue in enumerate(continue_date) :
-        _data = result.loc[_continue]
-        _date = _data.index[0]
-        returns = returns_.loc[_date]
-        _returns_.loc[_date] = returns
-
+    returns = returns.loc[enter]
+    returns = returns.join(indicator, rsuffix = '_indicator')
+    returns.sort_values('risk')
     #计算t+5收益
     _return_p_5 = pd.Series()
     for k, _continue in enumerate(continue_date) :
@@ -182,15 +174,15 @@ def find_down_risk_at_current_risk(indicator, close):
 
     return pd.Series({'平均日长' : mean_day,
             '中位数日长' : median_day,
-            't+1收益' : _returns_1.mean(),
-            't+1收益中位数' : _returns_1.mean(),
-            't收益' : _returns_.mean(),
-            't收益中位数' : _returns_.mean(),
+            't+1收益' : returns['t+1'].mean(),
+            't+1收益中位数' : returns['t+1'].median(),
+            't收益' : returns['returns'].mean(),
+            't收益中位数' : returns['returns'].median(),
             '次数' : count,
             '当天占比' : sum([1 for _continue in continue_date if len(_continue) == 1 ] ) / count,
             '1t占比' : sum([1 for _continue in continue_date if len(_continue) == 2 ] ) / count,
-            '1t下跌平均' : _returns_1.loc[_returns_1 < 0].mean(),
-            '1t下跌中位数' : _returns_1.loc[_returns_1 < 0].median(),            
+            '1t下跌平均' : returns['t+1'].loc[returns['t+1'] < 0].mean(),
+            '1t下跌中位数' : returns['t+1'].loc[returns['t+1'] < 0].median(),            
             '未来5日平均' : _return_p_5.mean(),
             '未来5日中位数' : _return_p_5.median()})
 
@@ -279,13 +271,22 @@ def find_continue_date(date):
 def main(if_save = True, setting = None, end_date = None) -> Results:
     # 挨个计算 bar 和 indicator
     result = {}
+    import os
+    with ProcessPoolExecutor(max_workers= os.cpu_count()-6)  as executor:
+        result = {k: executor.submit(calculate_indicator, 
+                                     name_2_symbol[k], 
+                                     setting = setting, 
+                                     end_date = end_date, 
+                                     if_analysis_down_risk= True) for k in name_2_symbol.keys()}
+        result = {k: v.result() for k, v in result.items()}
+
     for _ix in list( name_2_symbol.keys()):
-        result[_ix] =  calculate_indicator(
-                                name_2_symbol[_ix], 
-                                setting = setting, 
-                                end_date = end_date, 
-                                if_analysis_down_risk= True,
-                                           )
+        # result[_ix] =  calculate_indicator(
+        #                         name_2_symbol[_ix], 
+        #                         setting = setting, 
+        #                         end_date = end_date, 
+        #                         if_analysis_down_risk= True,
+        #                                    )
         result[_ix]['quantile'] = (result[_ix]['indicator'] < result[_ix]['indicator'].iloc[-1]).sum() / result[_ix]['indicator'].shape[0]
         
         print(result[_ix])
