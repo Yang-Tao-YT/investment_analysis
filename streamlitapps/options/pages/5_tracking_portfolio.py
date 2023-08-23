@@ -68,7 +68,11 @@ def load_position(axis = 1):
 
     dataframe1 = pd.DataFrame()
     if os.path.exists('huataiposition.csv'):
-        dataframe = pd.read_csv('huataiposition.csv', index_col=0)
+        try:
+            dataframe = pd.read_csv('huataiposition.csv', index_col=0)
+        except:
+            dataframe = pd.read_csv('huataiposition.csv', index_col=0, encoding='gbk')
+
         dataframe = dataframe.dropna(axis=1)
         def trans(x:str):
             if isinstance(x, str):
@@ -88,6 +92,8 @@ def load_position(axis = 1):
         dataframe = dataframe.loc[~dataframe.index.isna()]
 
         dataframe1 = pd.concat([dataframe1, dataframe], axis = 0).sort_index()
+
+        dataframe1.index = dataframe1.index.astype(str)
     return dataframe1
 
 

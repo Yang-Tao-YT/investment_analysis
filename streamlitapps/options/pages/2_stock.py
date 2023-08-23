@@ -5,7 +5,6 @@ import copy
 import datetime
 import os
 
-
 from pyecharts import options as opts
 from pyecharts import charts
 import pandas as pd
@@ -190,13 +189,17 @@ with cols[1]:
     with placeholder.container():
         
         _columns = st.columns(2)
-        end_date = st.date_input('end_date', value= pd.to_datetime('today') - pd.Timedelta(days = 1))
+        end_date = st.date_input('end_date', value= pd.to_datetime('today') 
+                                 - pd.Timedelta(days = 1)
+                                 )
         with _columns[0]:
             _result = calculate_indicator(symbol, 
                                           setting=setting, 
                                           if_return_stockindex=True, 
                                           if_analysis_risk_after_first_comeback=if_comeback,
-                                          end_date = end_date)
+                                          end_date = end_date,
+                                          if_analysis_down_risk=True,)
+            
             bar = _result['bar']
             result = _result['indicator']
             st.write(bar)
@@ -245,6 +248,9 @@ with tabs[2]:
         value= value.tolist() 
         components.html( plot_bar(x_value, value),width=1800, height=500)
 
+    if 'down_risk' in _result:
+        st.write(_result['down_risk']['summary'])
+        st.write(_result['down_risk']['returns'])
 
 if st.session_state['plot']:
 # if 1:

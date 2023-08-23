@@ -88,17 +88,20 @@ def calculate_indicator(symbol,
     result = return_indicator(indicator=indicator, stockindex = stockindex_copy)
     _return = {'indicator' : result, 'bar' : bar}
 
-
-
     if if_analysis_down_risk:
-        down_risk_analysis = find_down_risk_at_current_risk(result.copy(), stockindex_copy.origin_data['close'])
-
+        try:
+            down_risk_analysis = find_down_risk_at_current_risk(result.copy(), stockindex_copy.origin_data['close'])
+            _return['down_risk'] = down_risk_analysis
+        except:
+            pass
+        
     if if_analysis_risk_after_first_comeback:
         analysis = find_down_risk_after_first_comeback(result.copy(), stockindex_copy.origin_data['close'])
         _return['comeback'] = analysis
 
     if if_return_stockindex:
         _return['stockindex'] = stockindex_copy
+
     return _return
 
 def find_risk_trend(date, indicator):
@@ -172,7 +175,9 @@ def find_down_risk_at_current_risk(indicator, close):
         _close = close.loc[ _date: ].iloc[:6]
         _return_p_5.loc[_date] = _close.iloc[-1] / _close.iloc[0] - 1
 
-    return pd.Series({'平均日长' : mean_day,
+    _result = {}
+
+    _result['summary'] = pd.Series({'平均日长' : mean_day,
             '中位数日长' : median_day,
             't+1收益' : returns['t+1'].mean(),
             't+1收益中位数' : returns['t+1'].median(),
@@ -185,6 +190,9 @@ def find_down_risk_at_current_risk(indicator, close):
             '1t下跌中位数' : returns['t+1'].loc[returns['t+1'] < 0].median(),            
             '未来5日平均' : _return_p_5.mean(),
             '未来5日中位数' : _return_p_5.median()})
+    
+    _result['returns'] = returns
+    return _result
 
 
 def find_down_risk_after_first_comeback(indicator, close, compare_indicator = None, special_returns = None):

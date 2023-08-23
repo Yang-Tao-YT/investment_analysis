@@ -4,39 +4,42 @@ from data.generate_data import DataLoader
 import option_strategy
 from strategy.stock_strategy import return_stockindex, return_indicator
 
+
 def load_position(axis = 1):
     # dataframe = pd.read_csv('position.csv', encoding = 'utf-8-sig', index_col=0)
     # dataframe = dataframe.replace({'义务' : -1, '权利' : 1})
     # dataframe = dataframe.set_index('合约代码')
     # dataframe1 = dataframe.loc[~dataframe.index.isna()].copy()
-    try:
-        dataframe1 = pd.DataFrame()
-        if os.path.exists('huataiposition.csv'):
+
+    dataframe1 = pd.DataFrame()
+    if os.path.exists('huataiposition.csv'):
+        try:
             dataframe = pd.read_csv('huataiposition.csv', index_col=0)
-            dataframe = dataframe.dropna(axis=1)
-            def trans(x:str):
-                if isinstance(x, str):
-                    x = x.strip('=')
-                    x = x.strip('"')
-                return x
-            dataframe = dataframe.applymap(trans)
-            dataframe = dataframe.replace({'义务' : -1, '权利' : 1, })
-            dataframe = dataframe.rename(columns={'定价' : '定价价栳n','开仓均价' :'成本价',
-                                        '净仓' : '实际持仓'})
-            dataframe = dataframe.astype({'成本价' : float, '实际持仓' : int,})
+        except:
+            dataframe = pd.read_csv('huataiposition.csv', index_col=0, encoding='gbk')
 
-            dataframe['持仓类型'] = 1 ; dataframe.loc[dataframe['实际持仓'] < 0 , '持仓类型'] = -1
-            dataframe['实际持仓'] = abs(dataframe['实际持仓'])
+        dataframe = dataframe.dropna(axis=1)
+        def trans(x:str):
+            if isinstance(x, str):
+                x = x.strip('=')
+                x = x.strip('"')
+            return x
+        dataframe = dataframe.applymap(trans)
+        dataframe = dataframe.replace({'义务' : -1, '权利' : 1, })
+        dataframe = dataframe.rename(columns={'定价' : '定价价栳n','开仓均价' :'成本价',
+                                    '净仓' : '实际持仓'})
+        dataframe = dataframe.astype({'成本价' : float, '实际持仓' : int,})
 
-            dataframe = dataframe.set_index('合约编码')
-            dataframe = dataframe.loc[~dataframe.index.isna()]
+        dataframe['持仓类型'] = 1 ; dataframe.loc[dataframe['实际持仓'] < 0 , '持仓类型'] = -1
+        dataframe['实际持仓'] = abs(dataframe['实际持仓'])
 
-            dataframe1 = pd.concat([dataframe1, dataframe], axis = 0).sort_index()
-        return dataframe1
+        dataframe = dataframe.set_index('合约编码')
+        dataframe = dataframe.loc[~dataframe.index.isna()]
 
-    except Exception as e:
-        print(e)
-        return 
+        dataframe1 = pd.concat([dataframe1, dataframe], axis = 0).sort_index()
+
+        dataframe1.index = dataframe1.index.astype(str)
+    return dataframe1
 
 def return_account():
     loader =  DataLoader()

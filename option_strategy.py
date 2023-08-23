@@ -138,6 +138,7 @@ class Trading:
         index = self.position.index
         columns = self.position.columns
         temp_df = self.position.copy()
+        temp_df.index = temp_df.index.astype(str)
         temp_df = temp_df.drop('最新价', axis = 1, ).join(self.bar.df).copy()
         # 计算市值
         temp_df['合约市值'] =  temp_df[ '最新价'] * temp_df['实际持仓'] * temp_df['持仓类型'] *10000
