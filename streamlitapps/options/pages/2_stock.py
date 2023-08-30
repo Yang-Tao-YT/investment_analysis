@@ -190,7 +190,7 @@ with cols[1]:
         
         _columns = st.columns(2)
         end_date = st.date_input('end_date', value= pd.to_datetime('today') 
-                                 - pd.Timedelta(days = 1)
+                                #  - pd.Timedelta(days = 1)
                                  )
         with _columns[0]:
             _result = calculate_indicator(symbol, 

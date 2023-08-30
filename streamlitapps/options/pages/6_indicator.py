@@ -50,7 +50,7 @@ else:
 st.write(setting)
 
 end_date = st.date_input('end_date', value= pd.to_datetime('today') 
-                         - pd.Timedelta(days = 1)
+                        #  - pd.Timedelta(days = 1)
                          )
 if __name__ == '__main__':
 
