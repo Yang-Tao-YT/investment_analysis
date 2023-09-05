@@ -149,12 +149,14 @@ if os.path.exists('position.csv') or os.path.exists('huataiposition.csv'):
     hs300_price = return_stockindex('sh510300', None).origin_data.iloc[-1,:]['close']
     zz500_price = return_stockindex('sh510500', None).origin_data.iloc[-1,:]['close']
     shs300_price = return_stockindex('sz159919', None).origin_data.iloc[-1,:]['close']
+    hc50_price = return_stockindex('sh588000', None).origin_data.iloc[-1,:]['close']
     # calculate scale
     test = trad.position.iloc[:-1].copy()
     test.loc[test.合约名称.str.contains('510300'), '行权价'] = test.loc[test.合约名称.str.contains('510300') , '行权价'] / hs300_price - 1
     test.loc[test.合约名称.str.contains('159919') , '行权价'] = test.loc[ test.合约名称.str.contains('159919') , '行权价'] / shs300_price - 1
-    
     test.loc[test.合约名称.str.contains('500ETF')| test.合约名称.str.contains('510500') , '行权价'] = test.loc[test.合约名称.str.contains('500ETF')| test.合约名称.str.contains('510500') , '行权价'] / zz500_price - 1
+    test.loc[test.合约名称.str.contains('588000'), '行权价'] = test.loc[test.合约名称.str.contains('588000'), '行权价'] / hc50_price - 1
+
     trad.position.insert(4, '比例', list((test['行权价'] * 100).values) + [None]) 
     trad.position.insert(4, '比例绝对值', list(abs(test['行权价'] * 100).values) + [None]) 
 
