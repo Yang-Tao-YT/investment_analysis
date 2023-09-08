@@ -67,6 +67,10 @@ def load_position(axis = 1):
     # dataframe1 = dataframe.loc[~dataframe.index.isna()].copy()
 
     dataframe1 = pd.DataFrame()
+    from shutil import copyfile
+    if os.path.exists('持仓.csv'):
+        copyfile('持仓.csv', 'huataiposition.csv')
+        
     if os.path.exists('huataiposition.csv'):
         try:
             dataframe = pd.read_csv('huataiposition.csv', index_col=0)
