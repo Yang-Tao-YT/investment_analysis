@@ -46,6 +46,25 @@ def return_account():
     trad = option_strategy.Trading()
     dataframe = load_position(1)
     dataframe['under'] = dataframe.合约名称.str[:6]
+    # # 筛选
+    # filters = st.selectbox('underlying', [None] + [*dataframe.under.unique()])
+    # if filters is not None:
+    #     dataframe = dataframe.loc[dataframe.under == filters]
+
+    # months = dataframe.合约名称.str.split('月', expand=True)[0].str[-1].unique()
+    # filters2 = st.selectbox('months', [None] + [*months])
+    # # filters2 = 9
+    # if filters2 is not None:
+    #     dataframe = dataframe.loc[dataframe.合约名称.str.contains(f'{filters2}月')]
+
+    # cols2  = st.columns(3)
+    # with cols2[0]:
+    #     contract_split = st.checkbox('按合约')
+    # with cols2[1]:
+    #     type_split = st.checkbox('按类型')
+    # with cols2[2]:
+    #     if_edit = st.checkbox('edit')
+    # price
     data = loader.current_em()
     hs300 = loader.current_hs300sz_em()
 
@@ -64,21 +83,25 @@ def return_account():
     trad.update_bar(data)
     trad.update_greek(greek)
     
+    # if if_edit:
+    #     dataframe = st.data_editor(dataframe)
     trad.load_position(dataframe)
     profit = trad.profit()
-
+ 
     trad.update_position()
 
     # get price of underlying asset
     hs300_price = return_stockindex('sh510300', None).origin_data.iloc[-1,:]['close']
     zz500_price = return_stockindex('sh510500', None).origin_data.iloc[-1,:]['close']
     shs300_price = return_stockindex('sz159919', None).origin_data.iloc[-1,:]['close']
+    hc50_price = return_stockindex('sh588000', None).origin_data.iloc[-1,:]['close']
     # calculate scale
     test = trad.position.iloc[:-1].copy()
     test.loc[test.合约名称.str.contains('510300'), '行权价'] = test.loc[test.合约名称.str.contains('510300') , '行权价'] / hs300_price - 1
     test.loc[test.合约名称.str.contains('159919') , '行权价'] = test.loc[ test.合约名称.str.contains('159919') , '行权价'] / shs300_price - 1
-    
     test.loc[test.合约名称.str.contains('500ETF')| test.合约名称.str.contains('510500') , '行权价'] = test.loc[test.合约名称.str.contains('500ETF')| test.合约名称.str.contains('510500') , '行权价'] / zz500_price - 1
+    test.loc[test.合约名称.str.contains('588000'), '行权价'] = test.loc[test.合约名称.str.contains('588000'), '行权价'] / hc50_price - 1
+
     trad.position.insert(4, '比例', list((test['行权价'] * 100).values) + [None]) 
     trad.position.insert(4, '比例绝对值', list(abs(test['行权价'] * 100).values) + [None]) 
 

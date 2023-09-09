@@ -151,6 +151,7 @@ class Trading:
         #计算geek
         temp_df = temp_df.join(self._greek, lsuffix='old').copy()
         temp_df['Theta']  = (temp_df['Theta']  / 365)
+        temp_df[ ['sDelta', 'sGamma']] = temp_df[ ['Delta', 'Gamma']].copy()
         temp_df[ ['Delta', 'Gamma', 'Vega', 'Rho', 'Theta']] =     round(temp_df[ ['Delta', 'Gamma', 'Vega', 'Rho', 'Theta']].mul(
                             temp_df['实际持仓'].squeeze() * self.position['持仓类型' ].squeeze()
                      * 10000 , axis = 0)  )
@@ -181,7 +182,7 @@ class Trading:
         temp_df = temp_df.join(self._greek[ 'Delta'].to_frame('single delta'))
         # self.position.loc[index , '涨跌额'] = self.bar.df.loc[index , '涨跌额']* self.position.loc[index , '实际持仓'] * 10000 *  self.position.loc[index, '持仓类型']
         self.position = temp_df[['合约名称', '持仓类型', '实际持仓', '涨跌额', "涨跌幅", '成本价', '最新价', '合约市值', 
-       '浮动盈亏', '行权价' ,'Delta', 'Gamma', 'Vega', 'Theta', 'Rho', 'under']]
+       '浮动盈亏', '行权价' ,'Delta', 'Gamma', 'Vega', 'Theta', 'Rho', 'under', 'sDelta', 'sGamma']]
         
     def profit(self):
         
