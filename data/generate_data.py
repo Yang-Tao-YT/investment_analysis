@@ -396,10 +396,28 @@ class AkShare:
         index_investing_global_df = ak.index_investing_global(area="美国", symbol="标普500指数", period="每日", start_date="20100101", end_date="20220808")
         print(index_investing_global_df)
 
-    def obtain_index(self):
+    def obtain_hs300_index(self):
         stock_zh_index_daily_df = ak.stock_zh_index_daily(symbol="sh000300")
         print(stock_zh_index_daily_df)
-
+    
+    def download_us_index_hist_k(self, symbol = 'sp500'):
+        """
+        The function `download_stock_etf_hist_k` downloads historical stock or ETF data for a given symbol
+        from the Sina Finance website.
+        
+        Args:
+          symbol: The symbol parameter is used to specify which stock or ETF's historical data you want to
+        download. The default value is 'sp500', which corresponds to the S&P 500 index. Other options
+        include 'nasdaq' for the NASDAQ index and 'dow' for the Dow Jones Industrial Average. Defaults to
+        sp500
+        
+        Returns:
+          the file that is downloaded from the Sina website for the specified stock or ETF symbol.
+        """
+        symbol_ = {'sp500' : '.INX', 'nasdaq' : '.IXIC', 'dow' : '.DJI'}
+        file = self.ak.index_us_stock_sina(symbol=symbol_[symbol])
+        return file
+    
     def stock_etf_hist_dataloader(self, symbol='sh515790', gateway ='dc', save_path = config.path_hist_k_data):
         '''
         读取历史k线数据'''
@@ -420,6 +438,34 @@ class AkShare:
         if save_path is not None:
             data.to_csv(f'{save_path}/{symbol}.csv')
 
+        return data
+
+    def us_index_hist_dataloader(self, symbol='sp500',  save_path = config.path_hist_index_data):
+        '''
+        Args:
+          symbol: nasdaq, dow, sp500. The symbol parameter is used to specify which stock or ETF's historical data you want to
+        download. The default value is 'sp500', which corresponds to the S&P 500 index. Other options
+        include 'nasdaq' for the NASDAQ index and 'dow' for the Dow Jones Industrial Average. Defaults to
+        sp500
+
+        '''
+        max_try = 10
+
+        while max_try > 0:
+            try:
+                data = self.download_us_index_hist_k(symbol)
+                break
+            except Exception as e:
+                print(e)
+                max_try -= 1
+        
+        if max_try == 0:
+            Warning('download stock k data error, obtain from local history folder')
+            data = pd.read_csv(f'{save_path}/{symbol}.csv', index_col=0)
+
+        if save_path is not None:
+            data.to_csv(f'{save_path}/{symbol}.csv')
+        
         return data
     
 class YFinance:
@@ -646,5 +692,5 @@ def main():
 if __name__ == "__main__":
     # download_etf()
     # main()
-    AkShare().stock_zh_a_hist('sh512480')
+    DataLoader().ak.index_us_stock_sina(symbol=".INX")
     dbbug = 1

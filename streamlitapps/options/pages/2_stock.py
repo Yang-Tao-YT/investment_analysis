@@ -170,11 +170,11 @@ def history_return_hist(days):
 with cols[0]:
     #select symbol
     with st.container():
-        symbol = st.selectbox('code', list( name_2_symbol.keys()))
+        symbol = st.selectbox('code', list( name_2_symbol.keys()), index= len(list( name_2_symbol.keys()))-1)
         symbol = name_2_symbol[symbol]
         # indicator
         indicator =  st.multiselect('indicator', ['risk' , 'rsi'], default= 'risk')
-        # indicator = ['risk' , 'rsi']
+
 
 with cols[1]:
     #select window
@@ -252,7 +252,7 @@ with tabs[2]:
         st.write(_result['down_risk']['summary'])
         st.write(_result['down_risk']['returns'])
 
-if st.session_state['plot']:
+if st.session_state['plot'] or debug:
 # if 1:
         start = st.date_input('start', datetime.date(2023,1,1))
         end = st.date_input('end', pd.to_datetime('today'))

@@ -639,7 +639,7 @@ class StockIndex(Indicator):
 def stock_etf_hist_dataloader(symbol='sh515790', gateway ='dc', save_path = config.path_hist_k_data):
     '''
     读取历史k线数据'''
-    data = DataLoader().stock_etf_hist_dataloader(symbol=symbol, gateway ='dc', save_path = config.path_hist_k_data)
+    data = DataLoader().stock_etf_hist_dataloader(symbol=symbol, gateway ='dc', save_path = save_path)
 
     return data
 
@@ -666,7 +666,12 @@ def return_stockindex(symbol, setting : dict = None, end_date = None):
     stockindex = StockIndex()
 
     #download history k data
-    hist = stock_etf_hist_dataloader(symbol)
+    if symbol in 'nasdaq,dow,sp500'.split(','):
+        hist = DataLoader().us_index_hist_dataloader(symbol)
+        hist = hist.rename(columns={'close':'收盘','high':'最高','low':'最低','open':'开盘'})
+        hist['涨跌幅'] = hist['收盘'] / hist['收盘'].shift(1) - 1
+    else:
+        hist = stock_etf_hist_dataloader(symbol)
     hist = rename_dataframe(hist)
     hist['date'] = pd.to_datetime(hist['date']).dt.date
 
