@@ -4,9 +4,6 @@ import re
 from itertools import groupby
 import datetime
 
-worbok = load_workbook(f'../finance_data/options.xlsx')
-worbok.sheetnames
-
 def plus1(func):
 	func = [''.join(list(g)) for k,g in groupby(func, lambda x: x.isdigit())]
 	result = []
@@ -28,25 +25,48 @@ def plus1(func):
 	func = ''.join(result)
 	return func
 
-def pulldown(row, columns):
-	worbok['净值'][f'{columns}{row}'].value = plus1(worbok['净值'][f'{columns}{row-1}'].value)
-	worbok['净值'][f'{columns}{row}'].number_format = plus1(worbok['净值'][f'{columns}{row-1}'].value).number_format
+def pulldown(worbok, sheetname, row, columns):
+	if isinstance(worbok[sheetname][f'{columns}{row-1}'].value, str):
+		if '=' in worbok[sheetname][f'{columns}{row-1}'].value:
+			worbok[sheetname][f'{columns}{row}'].value = plus1(worbok[sheetname][f'{columns}{row-1}'].value)
+
+			worbok[sheetname][f'{columns}{row}'].number_format = worbok[sheetname][f'{columns}{row-1}'].number_format
+	
+		else:
+			worbok[sheetname][f'{columns}{row}'].value = worbok[sheetname][f'{columns}{row-1}'].value
+
+	elif  isinstance(worbok[sheetname][f'{columns}{row - 1}'].value, datetime.datetime):
+			worbok[sheetname][f'{columns}{row}'].value = worbok[sheetname][f'{columns}{row-1}'].value + datetime.timedelta(1)
+			worbok[sheetname][f'{columns}{row}'].number_format = worbok[sheetname][f'{columns}{row-1}'].number_format
+
+	else:
+		worbok[sheetname][f'{columns}{row}'].value = worbok[sheetname][f'{columns}{row-1}'].value
+
 
 # worbok['净值']['C52'].value = 1
-str_= len(worbok['净值']["C:C"]) + 1
-worbok['净值'][f'A{str_}'].value = worbok['净值'][f'A{str_ - 1}'].value + datetime.timedelta(1)
-worbok['净值'][f'A{str_}'].number_format = worbok['净值'][f'A{str_ - 1}'].number_format
-worbok['净值'][f'B{str_}'].value = 20000
-worbok['净值'][f'D{str_}'].value = 0
-worbok['净值'][f'B{str_}'].number_format = worbok['净值'][f'B{str_ - 1}'].number_format
+def main(worbok):
+	for _sheetname in ['杨文萍固收', '杨翠红固收', '陶春强', '陶阳', '杨文萍', 'sum']:
+		print(worbok[_sheetname]["1:1"])
+		print([i.value for i in worbok[_sheetname]["1:1"]])
+		str_= len(worbok[_sheetname]["A:A"]) + 1
+		for ix in ['A', 'B', 'C', 'D', 'E', 'F' ,'G']:
+			pulldown(worbok, _sheetname, str_, ix)
+
+	for _sheetname in ['净值']:
+		print(worbok[_sheetname]["1:1"])
+		print([i.value for i in worbok[_sheetname]["1:1"]])
+		str_= len(worbok[_sheetname]["A:A"]) 
+		for ix in ['A', 'C', 'D', 'E', 'F' ,'G']:
+			if ix == 'A':
+				print(1)
+			pulldown(worbok, _sheetname, str_, ix)
 
 
-for ix in ['E', 'F' , 'C', 'G']:
-	pulldown(str_, ix)
+	# worbok['净值'][f'E{str_}'].number_format = '0.00%'
+	worbok.save(f'../finance_data/options.xlsx') 
 
-plus1('=B89-B88-$D$89')
-
-worbok['净值'][f'E{str_}'].number_format = '0.00%'
-worbok.save(f'../finance_data/options.xlsx') 
-
+if __name__ == '__main__':
+	pass
+	# worbok = load_workbook(f'../finance_data/options.xlsx')
+	# worbok.sheetnames
 
